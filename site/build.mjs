@@ -33,10 +33,7 @@ function topbar(page) {
   return `  <header class="top">
     <div class="bar">
       <a class="brand" href="${r}/index.html" aria-label="nerv, home">
-        <svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
-          <path fill="#e11021" d="M50 4 8 50l42 46 42-46Zm0 15 27 31-27 30-27-30Z"/>
-          <path fill="#e11021" d="M50 26 30 50l20 24 20-24Z" opacity=".55"/>
-        </svg>
+        <img class="mark" src="${r}/assets/logo/nerv.svg" alt="" width="30" height="30">
         <span><b>nerv</b><i>ネルフ</i></span>
       </a>
       <nav>
@@ -61,7 +58,7 @@ function sidebar(page) {
     })
     .join("\n");
   return `  <aside>
-    <h5>${section.name} <span style="color:var(--faint);letter-spacing:.2em">${section.jp ?? ""}</span></h5>
+    <h5><span class="en">${section.name}</span><span class="jp">${section.jp ?? ""}</span></h5>
     <ul>
 ${items}
     </ul>
@@ -104,8 +101,14 @@ ${topbar(page)}
   <div class="wrap${aside ? "" : " wide"}">
 ${aside}
     <main>
-      <h1>${page.title}</h1>
-      <p class="lede">${page.blurb}</p>
+${page.logo
+        ? `      <div class="hero">
+        <img src="${r}/assets/logo/${page.logo}.svg" alt="the ${page.logo} mark" width="96" height="96">
+        <div class="who"><h1>${page.title}</h1></div>
+      </div>
+      <p class="lede">${page.blurb}</p>`
+        : `      <h1>${page.title}</h1>
+      <p class="lede">${page.blurb}</p>`}
 ${page.body}
 ${walk(page)}
     </main>

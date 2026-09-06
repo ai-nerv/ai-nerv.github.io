@@ -39,6 +39,13 @@ PAGES.push({
     "magi is a coding agent for Linux. It is one of four programs that talk over argv, a pipe " +
     "and a socket — and share not one line of code. This is how they fit together.",
   body: `
+      <div class="four">
+        <a href="programs/magi.html"><img src="assets/logo/magi.svg" alt=""><span>magi</span></a>
+        <a href="programs/casper.html"><img src="assets/logo/casper.svg" alt=""><span>casper</span></a>
+        <a href="programs/melchior.html"><img src="assets/logo/melchior.svg" alt=""><span>melchior</span></a>
+        <a href="programs/balthasar.html"><img src="assets/logo/balthasar.svg" alt=""><span>balthasar</span></a>
+      </div>
+
       <div class="cards">
         <div class="card">
           <h4>magi</h4><div class="role">the harness</div>
@@ -319,6 +326,7 @@ ${table(["gate", "what it forbids"], [
 PAGES.push({
   at: "programs/magi.html",
   section: "prog",
+  logo: "magi",
   nav: "magi",
   title: "magi",
   blurb:
@@ -370,6 +378,7 @@ ${note("<b><code>magi doctor</code> never fails.</b> A configuration that will n
 PAGES.push({
   at: "programs/casper.html",
   section: "prog",
+  logo: "casper",
   nav: "casper",
   title: "casper",
   blurb:
@@ -412,6 +421,7 @@ casper tools --cbor          <span class="c">the same reply, as bytes</span></pr
 PAGES.push({
   at: "programs/melchior.html",
   section: "prog",
+  logo: "melchior",
   nav: "melchior",
   title: "melchior",
   blurb:
@@ -460,6 +470,7 @@ ${note("<b>No verb here runs anything.</b> It sends messages, reads an inbox, an
 PAGES.push({
   at: "programs/balthasar.html",
   section: "prog",
+  logo: "balthasar",
   nav: "balthasar",
   title: "balthasar",
   blurb:

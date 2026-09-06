@@ -12,8 +12,8 @@
   --ink:     #e6e4dd;   /* read this */
   --dim:     #96999a;   /* read this second */
   --faint:   #5f6669;   /* labels, numbers, furniture */
-  --nerv:    #e11021;   /* NERV red. Spent on structure and on anything that refuses. */
-  --nerv-dim:#e1102122;
+  --nerv:    #ff2a20;   /* The red the logos are drawn in. Structure, and anything that refuses. */
+  --nerv-dim:#ff2a2020;
   --alert:   #ff4033;   /* hotter than the structural red, so a wall still reads as one */
   --go:      #7ee081;   /* a thing that worked */
   --disp: "Anton", "Arial Narrow", sans-serif;
@@ -64,8 +64,16 @@ body {
 .wrap.wide { grid-template-columns: minmax(0, 1fr); }
 aside { padding: 30px 0 0; position: sticky; top: 53px; align-self: start;
         max-height: calc(100vh - 70px); overflow-y: auto; }
-aside h5 { font-family: var(--cond); font-size: 12px; letter-spacing: .22em; text-transform: uppercase;
-           color: var(--nerv); margin: 0 0 10px; font-weight: 600; }
+aside h5 {
+  /* Indented to the same left edge as the items below, and laid out on one baseline: the
+   * Japanese face has its own metrics, so aligning the boxes is not aligning the text. */
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 0 0 10px; padding-left: 15px; font-weight: 600;
+}
+aside h5 .en { font-family: var(--cond); font-size: 13px; letter-spacing: .22em;
+               text-transform: uppercase; color: var(--nerv); }
+aside h5 .jp { font-family: var(--jp); font-size: 10px; letter-spacing: .2em; color: var(--faint);
+               font-weight: 400; }
 aside ul { list-style: none; margin: 0 0 24px; padding: 0; border-left: 1px solid var(--rule); }
 aside li a { display: block; padding: 5px 0 5px 14px; color: var(--dim); text-decoration: none;
              font-size: 12.5px; margin-left: -1px; border-left: 1px solid transparent; }
@@ -207,3 +215,23 @@ footer.foot .jp { font-family: var(--jp); letter-spacing: .3em; color: var(--ner
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } html { scroll-behavior: auto; } }
 :focus-visible { outline: 2px solid var(--nerv); outline-offset: 2px; }
+
+/* ---- the marks ------------------------------------------------------------------------------- */
+.brand .mark { width: 30px; height: 30px; flex: none; display: block; }
+.hero { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; margin-bottom: 4px; }
+.hero img { width: 96px; height: 96px; flex: none; }
+.hero .who { min-width: 0; }
+.wordmark { display: block; max-width: 360px; width: 100%; height: auto; margin: 0 0 6px; }
+.card .badge { display: flex; align-items: center; gap: 12px; }
+.card .badge img { width: 40px; height: 40px; flex: none; }
+.card .badge .who { min-width: 0; }
+.four { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 18px;
+        margin-top: 26px; }
+.four a { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 10px;
+          border: 1px solid var(--rule); background: var(--panel); text-decoration: none;
+          transition: border-color .12s ease, background .12s ease; }
+.four a:hover { border-color: var(--nerv); background: var(--sunk); }
+.four img { width: 62px; height: 62px; }
+.four span { font-family: var(--cond); font-size: 15px; letter-spacing: .18em; text-transform: uppercase;
+             color: var(--dim); }
+.four a:hover span { color: var(--ink); }

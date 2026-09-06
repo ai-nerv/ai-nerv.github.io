@@ -50,7 +50,7 @@
       </div>
 
       <h2 id="edges">Every edge</h2>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>edge</th><th>who starts it</th><th>carries</th><th>absent?</th></tr></thead>
         <tbody>
           <tr><td>magi → casper</td><td class="wrap-ok">magi, once per tool call</td><td class="wrap-ok">the call as argv and stdin; the result on stdout</td><td class="wrap-ok">three builtin tools remain: <code>read</code>, <code>write</code>, <code>edit</code></td></tr>
@@ -59,7 +59,7 @@
           <tr><td>session → session</td><td class="wrap-ok">either, through melchior</td><td class="wrap-ok">messages, questions and answers between agents</td><td class="wrap-ok">a session with no siblings, which is the ordinary case</td></tr>
           <tr><td>front end → session</td><td class="wrap-ok">the front end</td><td class="wrap-ok">what was typed, up; everything to draw, down</td><td class="wrap-ok">the turn keeps running — close the window and come back</td></tr>
         </tbody>
-      </table>
+      </table></div>
 
       <h2 id="why">Why separate processes</h2>
       <p>Three things fall out of the split that do not fall out of modules in one binary.</p>

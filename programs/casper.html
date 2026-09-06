@@ -47,7 +47,7 @@
       <p class="lede">The tools a coding agent runs, and the screen they draw on. One process per call, and it knows nothing about models, turns or transcripts.</p>
 
       <h2 id="tools">What it offers</h2>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>tools</th><th>for</th></tr></thead>
         <tbody>
           <tr><td><code>cat</code> <code>ls</code> <code>find</code> <code>grep</code> <code>patch</code></td><td class="wrap-ok">reading the tree</td></tr>
@@ -56,7 +56,7 @@
           <tr><td><code>hexe</code> <code>oslo</code> <code>session</code></td><td class="wrap-ok">asking the multiplexer, the shell, or the harness about themselves</td></tr>
           <tr><td><code>dino</code> <code>birdy</code></td><td class="wrap-ok">two games, because a surface that can draw a game can draw anything</td></tr>
         </tbody>
-      </table>
+      </table></div>
       <p>Every one is declared in <code>config/tools.lua</code>, in Lua, and nothing about them is
       compiled in. A tool of your own goes in the same file — see
       <a href="../guides/tools.html">writing a tool</a>.</p>

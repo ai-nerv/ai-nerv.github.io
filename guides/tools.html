@@ -63,7 +63,7 @@
     }
   end,
 })</pre>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>field</th><th>is</th></tr></thead>
         <tbody>
           <tr><td><code>description</code></td><td class="wrap-ok">what the model is told the tool does. This is the whole of how it decides to call it.</td></tr>
@@ -71,7 +71,7 @@
           <tr><td><code>run</code></td><td class="wrap-ok">what happens. Returns <code>said</code> and <code>shown</code>.</td></tr>
           <tr><td><code>transport</code></td><td class="wrap-ok">how it is reached, when it is not this Lua body — see below.</td></tr>
         </tbody>
-      </table>
+      </table></div>
 
       <h2 id="split">said and shown</h2>
       <p>The split is the whole idea. <code>said</code> enters the transcript, is replayed on every
@@ -82,7 +82,7 @@
       <code>said = "patched 3 files"</code>, costs four words.</p>
 
       <h2 id="transports">Four ways to be reached</h2>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>transport</th><th>is</th><th>for</th></tr></thead>
         <tbody>
           <tr><td><code>lua</code></td><td class="wrap-ok">a body that runs in magi's own VM</td><td class="wrap-ok">anything that is a few lines of logic</td></tr>
@@ -90,7 +90,7 @@
           <tr><td><code>casper</code></td><td class="wrap-ok"><code>casper run &lt;tool&gt;</code></td><td class="wrap-ok">the thirteen casper ships</td></tr>
           <tr><td><code>builtin</code></td><td class="wrap-ok">compiled into magi</td><td class="wrap-ok">the floor: <code>read</code>, <code>write</code>, <code>edit</code></td></tr>
         </tbody>
-      </table>
+      </table></div>
       <p>The registry does not care which. One name, one entry, and the model sees the same
       declaration whichever way it is reached.</p>
 

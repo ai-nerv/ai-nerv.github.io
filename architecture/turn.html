@@ -50,7 +50,7 @@
       </div>
 
       <h2 id="clocks">What is on a clock, and what is not</h2>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>hop</th><th>clock</th><th>if it fails</th></tr></thead>
         <tbody>
           <tr><td>recall</td><td class="wrap-ok">yes — a short deadline</td><td class="wrap-ok">the turn proceeds with nothing recalled. Memory is never on the critical path.</td></tr>
@@ -59,7 +59,7 @@
           <tr><td>a tool call</td><td class="wrap-ok">per tool</td><td class="wrap-ok">the failure is handed back to the model as the result, not raised.</td></tr>
           <tr><td>outcome</td><td class="wrap-ok">no</td><td class="wrap-ok">balthasar learns nothing from this turn. Nothing else changes.</td></tr>
         </tbody>
-      </table>
+      </table></div>
 
       <h2 id="ledger">The model never reaches anything</h2>
       <p>It emits a request naming a tool. magi decides whether it may run, and magi is the one

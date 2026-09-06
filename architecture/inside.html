@@ -63,7 +63,7 @@
 
       <h2 id="gates">What holds the shape</h2>
       <p>Every one of these runs on the way to <code>main</code>, in all four repositories.</p>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>gate</th><th>what it forbids</th></tr></thead>
         <tbody>
           <tr><td>no cycles</td><td class="wrap-ok">two top-level modules that depend on each other. This is what a reachability check cannot catch: a cycle is maximally reachable.</td></tr>
@@ -75,7 +75,7 @@
           <tr><td>no model needed</td><td class="wrap-ok">a memory test that only passes with a key and a network</td></tr>
           <tr><td>no dead weight</td><td class="wrap-ok">a declared dependency the code does not use</td></tr>
         </tbody>
-      </table>
+      </table></div>
 
       <div class="next"><a href="lifetime.html"><span class="lbl">back</span>lifetimes</a><span></span></div>
     </main>

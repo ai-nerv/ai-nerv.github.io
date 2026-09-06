@@ -64,7 +64,7 @@ magi.confine = true                     <span class="c">-- refuse paths outside 
 magi.allow   = { … }                    <span class="c">-- answered in advance, not under pressure</span></pre>
 
       <h2 id="settings">What it takes</h2>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>setting</th><th>does</th></tr></thead>
         <tbody>
           <tr><td><code>magi.model</code></td><td class="wrap-ok">which model, as <code>magi models</code> prints it</td></tr>
@@ -77,20 +77,20 @@ magi.allow   = { … }                    <span class="c">-- answered in advance
           <tr><td><code>magi.ui</code></td><td class="wrap-ok">every colour, glyph and measurement the screen draws with</td></tr>
           <tr><td><code>magi.melchior</code> · <code>magi.balthasar</code></td><td class="wrap-ok">settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two</td></tr>
         </tbody>
-      </table>
+      </table></div>
 
       <h2 id="trust">A project's own file</h2>
       <p>A <code>.magi.lua</code> arrives with a checkout. Cloning a repository and running magi in
       it must not be enough to add a tool — a tool names a command to run — or to widen what runs
       without asking.</p>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>a project file may</th><th>and may not</th></tr></thead>
         <tbody>
           <tr><td>choose a model the machine already offers</td><td class="wrap-ok">declare a tool</td></tr>
           <tr><td>set ordinary settings</td><td class="wrap-ok">touch <code>confine</code>, <code>allow</code> or <code>trusted</code> — fatal, not a warning</td></tr>
           <tr><td>load its own files</td><td class="wrap-ok">name its own directory as trusted</td></tr>
         </tbody>
-      </table>
+      </table></div>
       <p>The one way past it is from your own configuration: naming a directory in
       <code>magi.trusted</code> makes its project file as good as yours. A decision made once, in
       advance, in the file only you can edit. Without a way to say yes, the rule would be worked

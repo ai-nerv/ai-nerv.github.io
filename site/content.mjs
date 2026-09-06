@@ -18,12 +18,12 @@ const plate = (id, name, says) => `      <div class="plate">
       </div>`;
 
 /** A table from rows of [left, right]. */
-const table = (head, rows) => `      <table>
+const table = (head, rows) => `      <div class="tw"><table>
         <thead><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr></thead>
         <tbody>
 ${rows.map((r) => `          <tr>${r.map((c, i) => `<td${i ? ' class="wrap-ok"' : ""}>${c}</td>`).join("")}</tr>`).join("\n")}
         </tbody>
-      </table>`;
+      </table></div>`;
 
 const note = (text) => `      <div class="note">${text}</div>`;
 

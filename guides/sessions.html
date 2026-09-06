@@ -52,23 +52,23 @@
       </div>
 
       <h2 id="walls">Two walls</h2>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th>wall</th><th>means</th></tr></thead>
         <tbody>
           <tr><td>the project wall</td><td class="wrap-ok">a session sees only its own project's directory. Not <i>should not</i> — another project's sessions are somewhere this one never lists.</td></tr>
           <tr><td>the instance wall</td><td class="wrap-ok">a main is its instance's front door; the subagents behind it are private.</td></tr>
         </tbody>
-      </table>
+      </table></div>
 
       <h2 id="talk">Widening the second one</h2>
-      <table>
+      <div class="tw"><table>
         <thead><tr><th><code>magi.agent_talk</code></th><th>lets</th></tr></thead>
         <tbody>
           <tr><td><code>"mains"</code></td><td class="wrap-ok">two sessions started at a terminal talk to each other, and a subagent talk to whoever started it. Nothing else. <b>The default.</b></td></tr>
           <tr><td><code>"instance"</code></td><td class="wrap-ok">and subagents of the same parent talk to each other</td></tr>
           <tr><td><code>"project"</code></td><td class="wrap-ok">and anything in the project reach anything else in it</td></tr>
         </tbody>
-      </table>
+      </table></div>
       <p>Sessions in different projects never can, at any setting. This only widens things inside
       one project, and nothing widens it further.</p>
 

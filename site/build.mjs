@@ -8,7 +8,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { SECTIONS, PAGES } from "./content.mjs";
 
-const OUT = "docs";
+const OUT = ".";
 
 /** Where a page sits, relative to another page. */
 function href(from, to) {
@@ -32,8 +32,12 @@ function topbar(page) {
   }).join("\n        ");
   return `  <header class="top">
     <div class="bar">
-      <a class="brand" href="${r}/index.html">
-        <b>nerv</b><span>a coding agent<br>for linux</span>
+      <a class="brand" href="${r}/index.html" aria-label="nerv, home">
+        <svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
+          <path fill="#ff6a00" d="M50 4 8 50l42 46 42-46Zm0 15 27 31-27 30-27-30Z"/>
+          <path fill="#ff6a00" d="M50 26 30 50l20 24 20-24Z" opacity=".55"/>
+        </svg>
+        <span><b>nerv</b><i>ネルフ</i></span>
       </a>
       <nav>
         ${links}
@@ -57,7 +61,7 @@ function sidebar(page) {
     })
     .join("\n");
   return `  <aside>
-    <h5>${section.name}</h5>
+    <h5>${section.name} <span style="color:var(--faint);letter-spacing:.2em">${section.jp ?? ""}</span></h5>
     <ul>
 ${items}
     </ul>
@@ -92,7 +96,7 @@ function html(page) {
 <meta name="description" content="${page.blurb}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;700&display=swap">
 <link rel="stylesheet" href="${r}/assets/style.css">
 </head>
 <body>
@@ -108,6 +112,7 @@ ${walk(page)}
   </div>
   <footer class="foot">
     <div class="in">
+      <span class="jp">人類補完計画</span>
       <span>magi · casper · melchior · balthasar</span>
       <span>four repositories, no shared code</span>
       <a href="https://github.com/ai-nerv/magi">magi</a>

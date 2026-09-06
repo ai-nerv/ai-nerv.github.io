@@ -4,11 +4,11 @@
 // written, `nav` is what the sidebar calls it, and `body` is everything under the lede.
 
 export const SECTIONS = [
-  { key: "home", name: "overview", home: "index.html" },
-  { key: "arch", name: "architecture", home: "architecture/index.html" },
-  { key: "prog", name: "the four", home: "programs/magi.html" },
-  { key: "guide", name: "guides", home: "guides/install.html" },
-  { key: "ref", name: "reference", home: "reference/wire.html" },
+  { key: "home", name: "overview", jp: "概要", home: "index.html" },
+  { key: "arch", name: "architecture", jp: "構造", home: "architecture/index.html" },
+  { key: "prog", name: "the four", jp: "四機", home: "programs/magi.html" },
+  { key: "guide", name: "guides", jp: "手引", home: "guides/install.html" },
+  { key: "ref", name: "reference", jp: "規格", home: "reference/wire.html" },
 ];
 
 /** A drawing, with the plate furniture around it. */

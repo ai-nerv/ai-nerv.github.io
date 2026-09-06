@@ -12,9 +12,9 @@
   --ink:     #e6e4dd;   /* read this */
   --dim:     #96999a;   /* read this second */
   --faint:   #5f6669;   /* labels, numbers, furniture */
-  --nerv:    #ff6a00;   /* NERV orange. Spent on structure and on anything that refuses. */
-  --nerv-dim:#ff6a0022;
-  --alert:   #e5202a;   /* a refusal, a wall */
+  --nerv:    #e11021;   /* NERV red. Spent on structure and on anything that refuses. */
+  --nerv-dim:#e1102122;
+  --alert:   #ff4033;   /* hotter than the structural red, so a wall still reads as one */
   --go:      #7ee081;   /* a thing that worked */
   --disp: "Anton", "Arial Narrow", sans-serif;
   --cond: "Barlow Condensed", "Arial Narrow", sans-serif;
@@ -165,7 +165,7 @@ footer.foot .jp { font-family: var(--jp); letter-spacing: .3em; color: var(--ner
 .n-box  { fill: var(--sunk); stroke: var(--rule-up); stroke-width: 1; }
 .n-ext  { fill: var(--void); stroke: var(--rule-up); stroke-width: 1; stroke-dasharray: 4 3; }
 .n-hub  { fill: var(--nerv-dim); stroke: var(--nerv); stroke-width: 1.4; }
-.n-stop { fill: #e5202a1f; stroke: var(--alert); stroke-width: 1; }
+.n-stop { fill: #ff40331f; stroke: var(--alert); stroke-width: 1; }
 .n-lab  { font-family: var(--mono); font-size: 11.5px; font-weight: 600; fill: var(--ink);
           text-anchor: middle; }
 .n-sub  { font-family: var(--mono); font-size: 9.5px; fill: var(--dim); text-anchor: middle; }

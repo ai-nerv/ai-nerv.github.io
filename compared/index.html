@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Measured against two others — nerv</title>
-<meta name="description" content="nerv was designed from two existing harnesses: a million-line single binary, and an eight thousand line strictly layered one. Every number here was measured, not read off a README.">
+<title>Measured against two originals — nerv</title>
+<meta name="description" content="nerv was designed from two existing harnesses, both written in TypeScript. This compares against those — and then against what happened when each was rewritten in Rust.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;700&display=swap">
@@ -34,110 +34,71 @@
   <aside>
     <h5><span class="en">compared</span><span class="jp">比較</span></h5>
     <ul>
-      <li><a href="index.html" aria-current="page">pi and deepseek</a></li>
-      <li><a href="boundaries.html">boundaries</a></li>
+      <li><a href="index.html" aria-current="page">the originals</a></li>
+      <li><a href="rewrite.html">what survived</a></li>
+      <li><a href="modularity.html">what a module is</a></li>
       <li><a href="permissions.html">permissions</a></li>
       <li><a href="providers.html">providers</a></li>
     </ul>
   </aside>
     <main>
-      <h1>Measured against two others</h1>
-      <p class="lede">nerv was designed from two existing harnesses: a million-line single binary, and an eight thousand line strictly layered one. Every number here was measured, not read off a README.</p>
+      <h1>Measured against two originals</h1>
+      <p class="lede">nerv was designed from two existing harnesses, both written in TypeScript. This compares against those — and then against what happened when each was rewritten in Rust.</p>
 
-      <h2 id="three">Three shapes</h2>
+      <h2 id="three">The three systems</h2>
       <div class="tw"><table>
         <thead><tr><th></th><th></th><th></th></tr></thead>
         <tbody>
-          <tr><td><b>pi</b></td><td class="wrap-ok">one binary</td><td class="wrap-ok">A ~1M-line Rust coding agent, around seven months old. Everything in one process: the UI, the turn loop, 103 providers, a JavaScript extension runtime. One of the two systems nerv was designed from.</td></tr>
-          <tr><td><b>deepseek</b></td><td class="wrap-ok">layered crates</td><td class="wrap-ok">8,390 lines in strict layers — contracts, execution, services, adapters, assembly, apps — with the layering checked on every pull request. Small, disciplined, and does much less.</td></tr>
-          <tr><td><b>nerv</b></td><td class="wrap-ok">four processes</td><td class="wrap-ok">126,026 lines across four programs that share no code and talk over argv, a pipe and a socket. Each is useful, and testable, with the others absent.</td></tr>
+          <tr><td><b>pi-ts</b></td><td class="wrap-ok">11 npm packages</td><td class="wrap-ok">150,756 production lines, 6,286 commits. A package graph held by the npm resolver, on the critical path of every build.</td></tr>
+          <tr><td><b>deepseek-ts</b></td><td class="wrap-ok">255 packages</td><td class="wrap-ok">307,345 lines, 15,210 commits, plus a vendored dependency-injection framework and 989 rows of YAML that decide what is assembled.</td></tr>
+          <tr><td><b>nerv</b></td><td class="wrap-ok">25 crates, 4 repos</td><td class="wrap-ok">72,532 lines at the time of measurement, 407 commits, nine days old. Four programs that share no code.</td></tr>
         </tbody>
       </table></div>
+      <div class="note"><b>Nine days against fifteen thousand commits.</b> Every claim below of the form “this discipline has held” is a prediction, and the discount cuts both ways: nerv accumulated six dead dependency edges out of fifty-nine in nine days, which is a faster drift rate than deepseek-ts's 282 of 1,304 over 15,210 commits. Claims about what the compiler <i>refuses</i> are not subject to it.</div>
 
       <h2 id="glance">At a glance</h2>
-      <p>Measured from the checkouts, today. Rust only, tests included, generated and vendored
-      trees excluded.</p>
+      <p>Every number measured on the checkouts, not read off documentation.</p>
       <div class="tw"><table>
-        <thead><tr><th></th><th>pi</th><th>deepseek</th><th>nerv</th></tr></thead>
+        <thead><tr><th></th><th>pi-ts</th><th>deepseek-ts</th><th>nerv</th></tr></thead>
         <tbody>
-          <tr><td>lines</td><td class="wrap-ok">983,588</td><td class="wrap-ok">8,390</td><td class="wrap-ok">126,026</td></tr>
-          <tr><td>files</td><td class="wrap-ok">682</td><td class="wrap-ok">43</td><td class="wrap-ok">442</td></tr>
-          <tr><td>largest file</td><td class="wrap-ok"><b>36,158</b></td><td class="wrap-ok">662</td><td class="wrap-ok"><b>783</b></td></tr>
-          <tr><td>files over 800 lines</td><td class="wrap-ok"><b>313</b></td><td class="wrap-ok">0</td><td class="wrap-ok"><b>0 of 442</b></td></tr>
-          <tr><td>processes at rest</td><td class="wrap-ok">1</td><td class="wrap-ok">1</td><td class="wrap-ok">3</td></tr>
-          <tr><td>providers</td><td class="wrap-ok">103, in Rust</td><td class="wrap-ok">1</td><td class="wrap-ok">7, in Lua</td></tr>
-          <tr><td>adding a wire protocol</td><td class="wrap-ok">a module and a rebuild</td><td class="wrap-ok">a new crate</td><td class="wrap-ok"><b>a Lua table, no rebuild</b></td></tr>
-          <tr><td>permission model</td><td class="wrap-ok">3 modes, not persisted</td><td class="wrap-ok"><b>none</b></td><td class="wrap-ok"><b>4 verbs × 5 widths, with a ledger</b></td></tr>
-          <tr><td>OS sandbox</td><td class="wrap-ok"><b>none</b></td><td class="wrap-ok">none</td><td class="wrap-ok"><code>bwrap</code>, through the process transport</td></tr>
-          <tr><td>boundary enforced by</td><td class="wrap-ok"><code>pub</code> and convention</td><td class="wrap-ok">85 lines of Python in CI</td><td class="wrap-ok">no dependency edge exists to widen</td></tr>
-          <tr><td>peer sessions</td><td class="wrap-ok">parent-spawned children</td><td class="wrap-ok">none</td><td class="wrap-ok">a socket, two walls, a shipped tool</td></tr>
-          <tr><td>memory layer</td><td class="wrap-ok">none</td><td class="wrap-ok">none</td><td class="wrap-ok">a separate program with its own store</td></tr>
-        </tbody>
-      </table></div>
-      <div class="note"><b>The largest file is the number that decides how a codebase is read.</b> pi's <code>extensions_js.rs</code> is 36,158 lines — nobody holds that in their head, so it is edited by search. nerv's rule is 800 lines, enforced by a gate on the merge path, and all 442 files are under it. deepseek needs no gate: it is small enough that the question has not come up.</div>
-
-      <h2 id="took">What was taken from each</h2>
-      <ul class="plain">
-        <li><b>From deepseek, the idea that a rule is not a rule until it is a merge barrier.</b>
-        Its architectural invariant is 85 lines of Python running between <code>fmt</code> and
-        <code>clippy</code>. Mechanically it is far weaker than nerv's gate scripts — and it was
-        strictly more valuable, because for a while ours ran only on a laptop. A gate that is not
-        a barrier is a personal ritual.</li>
-        <li><b>From pi, that a boundary needs a second implementation.</b> A protocol with one
-        implementation is a function call with extra steps: nothing forces the host to say what it
-        means. magi ships a second tool peer in Lua, deliberately unlike the first.</li>
-        <li><b>From pi, content-hashing what you are about to run.</b> Trust bound to the binary,
-        re-checked before spawn, rather than to a name resolved off <code>$PATH</code>.</li>
-        <li><b>From deepseek, one spawn site with both a timeout and a kill.</b> Its entire tree
-        spawns a child in exactly one place, and that place has both guards in sixty lines.</li>
-      </ul>
-
-      <h2 id="left">What was deliberately left</h2>
-      <div class="tw"><table>
-        <thead><tr><th>not taken</th><th>why</th></tr></thead>
-        <tbody>
-          <tr><td>pi's 103-row provider table</td><td class="wrap-ok">hand-written Rust per provider, plus failover chains and a credential-rotation ring. Seven providers in Lua answer the same question, and adding one needs no rebuild.</td></tr>
-          <tr><td>a vendored tokenizer</td><td class="wrap-ok">pi vendors one, does not compile it, and then measures with <code>len()/4</code> anyway</td></tr>
-          <tr><td>the JavaScript extension runtime</td><td class="wrap-ok">around 160k lines, with a Node compatibility layer of 107 embedded modules</td></tr>
-          <tr><td>a background compaction worker, a resource governor, a scheduler</td><td class="wrap-ok">roughly 11k lines solving problems a 295-line compactor does not have</td></tr>
-          <tr><td>credential scavenging from other agents' config files</td><td class="wrap-ok">reading another program's secrets because they happen to be on the same disk</td></tr>
-          <tr><td>substring-prose error classification</td><td class="wrap-ok">a provider failure is classified structurally here, which is simply better</td></tr>
+          <tr><td>unit</td><td class="wrap-ok">npm package</td><td class="wrap-ok">npm package</td><td class="wrap-ok">cargo crate</td></tr>
+          <tr><td>units</td><td class="wrap-ok">11</td><td class="wrap-ok">255</td><td class="wrap-ok">25, in 4 workspaces</td></tr>
+          <tr><td>median unit size</td><td class="wrap-ok">1,966</td><td class="wrap-ok"><b>549</b></td><td class="wrap-ok">2,138</td></tr>
+          <tr><td>largest unit</td><td class="wrap-ok"><b>70,067</b></td><td class="wrap-ok">15,593</td><td class="wrap-ok">9,004</td></tr>
+          <tr><td>largest file</td><td class="wrap-ok">6,592</td><td class="wrap-ok">6,443</td><td class="wrap-ok"><b>783</b></td></tr>
+          <tr><td>files ≥ 800 lines</td><td class="wrap-ok">48 of 667</td><td class="wrap-ok">50 of 1,592</td><td class="wrap-ok"><b>0 of 421</b></td></tr>
+          <tr><td>build ceremony per unit</td><td class="wrap-ok">77 lines</td><td class="wrap-ok">95 lines</td><td class="wrap-ok"><b>20 lines</b></td></tr>
+          <tr><td>declared edges per kLOC</td><td class="wrap-ok">0.14</td><td class="wrap-ok"><b>4.24</b></td><td class="wrap-ok">0.81</td></tr>
+          <tr><td>undeclared test edges</td><td class="wrap-ok">4 sites</td><td class="wrap-ok"><b>76, across 50 packages</b></td><td class="wrap-ok"><b>0 — structurally impossible</b></td></tr>
+          <tr><td>lines compiled to test one unit</td><td class="wrap-ok">a whole package — up to 70,067</td><td class="wrap-ok">~22,000</td><td class="wrap-ok"><b>~8,200</b></td></tr>
+          <tr><td>what refuses an undeclared edge</td><td class="wrap-ok">a script, at pre-commit and in CI</td><td class="wrap-ok">a gate that <b>writes the edge into your manifest</b></td><td class="wrap-ok"><b>the compiler, always</b></td></tr>
         </tbody>
       </table></div>
 
-      <h2 id="better">Where the others are better</h2>
-      <p>Written down because a comparison that only flatters the thing writing it is an
-      advertisement.</p>
-      <ul class="plain">
-        <li><b>pi's deadlines are compiler-enforced.</b> Every command variant carries a
-        <code>deadline</code>, so a caller physically cannot cross its internal boundary without
-        stating one. nerv has a deadline on the memory socket and <b>none in any wire type</b>.</li>
-        <li><b>pi's compaction is token-aware and never splits a tool call from its result</b>,
-        with a four-rung degradation ladder. nerv keeps a fixed number of entries and measures in
-        characters over four.</li>
-        <li><b>pi analyses a command before running it.</b> nerv analyses nothing: it decides
-        <i>whether</i> an action is permitted, not whether it is wise.</li>
-        <li><b>pi's file open is genuinely hardened against the race</b> — canonicalise, open with
-        <code>O_NOFOLLOW</code>, re-stat the descriptor, refuse if it moved. nerv normalises
-        lexically and then reads.</li>
-        <li><b>pi audits every approval, including the automatic ones.</b> A grant hit here returns
-        quietly, so “what did this session do under standing grants” has no answer.</li>
-        <li><b>pi crash-tests its durability</b> by hard-exiting the process at named boundaries.
-        nerv's durable write is a buffer flush; nothing calls <code>sync_data</code>.</li>
-        <li><b>deepseek's whole suite runs without an API key</b>, so its provider path is exercised
-        in CI rather than skipped.</li>
-      </ul>
-      <div class="note"><b>This list is the point of the exercise.</b> It was produced by reading both systems against ours line by line, and several items on it have since been fixed — the gates became a merge barrier, secrets are masked out of the transcript, a chained command no longer passes as its first word. The ones above are the ones still true.</div>
+      <h2 id="verdict">The verdict, in one sentence</h2>
+      <p>nerv owns <b>the only module boundary of the three that cannot be crossed by accident</b>,
+      and — at the time of the analysis — the only enforcement tier that ran nowhere but a
+      developer's laptop.</p>
+      <p>Verified by writing the violation rather than reasoning about it:</p>
+      <pre>error[E0433]: failed to resolve: use of unresolved module or unlinked crate <span class="a">magi_host</span></pre>
+      <p>In pi-ts the same violation type-checks clean and fails at a consumer's runtime. In
+      deepseek-ts it type-checks clean through a match-all alias map, and the gate's remedy is to
+      <b>add the edge to your manifest for you</b>. Across programs it is stronger still: no
+      manifest in the four workspaces names a sibling, so violating that boundary means editing a
+      different repository.</p>
 
-      <h2 id="method">How it was measured</h2>
-      <p>Both systems are checked out and read, in Rust and in their original TypeScript. Counts
-      come from the files git tracks, with generated and vendored trees excluded, and were taken
-      again the day this page was written rather than copied from the analysis they came from.</p>
-      <p>Where a claim is about behaviour rather than size, it was checked by running the thing:
-      a grant offered a hostile command line, a socket asked in one encoding and answered in
-      another, a harness killed outright to see what survived it.</p>
+      <h2 id="deeper">Read on</h2>
+      <div class="tw"><table>
+        <thead><tr><th></th><th></th></tr></thead>
+        <tbody>
+          <tr><td><a href="rewrite.html">what survived the rewrite</a></td><td class="wrap-ok">both originals were rewritten in Rust. Only the boundaries that were already <i>data</i> came through — which is the most useful thing in this comparison.</td></tr>
+          <tr><td><a href="modularity.html">what a module is</a></td><td class="wrap-ok">units, edges, and what refuses a violation at each of the three</td></tr>
+          <tr><td><a href="permissions.html">three bets on safety</a></td><td class="wrap-ok">permission models, and what auditing ours found</td></tr>
+          <tr><td><a href="providers.html">where vendor knowledge lives</a></td><td class="wrap-ok">one question, and a tenfold difference in what the answer costs</td></tr>
+        </tbody>
+      </table></div>
 
-      <div class="next"><span></span><a href="boundaries.html"><span class="lbl">next</span>boundaries</a></div>
+      <div class="next"><span></span><a href="rewrite.html"><span class="lbl">next</span>what survived</a></div>
     </main>
   </div>
   <footer class="foot">

@@ -1069,170 +1069,175 @@ ${note("<b><code>--tied</code> is absent by default.</b> A balthasar started at 
 });
 
 // ------------------------------------------------------------------------------ compared -----
+// ------------------------------------------------------------------------------ compared -----
 PAGES.push({
   at: "compared/index.html",
   section: "cmp",
-  nav: "pi and deepseek",
-  title: "Measured against two others",
+  nav: "the originals",
+  title: "Measured against two originals",
   blurb:
-    "nerv was designed from two existing harnesses: a million-line single binary, and an eight " +
-    "thousand line strictly layered one. Every number here was measured, not read off a README.",
+    "nerv was designed from two existing harnesses, both written in TypeScript. This compares " +
+    "against those — and then against what happened when each was rewritten in Rust.",
   body: `
-      <h2 id="three">Three shapes</h2>
+      <h2 id="three">The three systems</h2>
 ${table(["", "", ""], [
-  ["<b>pi</b>", "one binary", "A ~1M-line Rust coding agent, around seven months old. Everything in one process: the UI, the turn loop, 103 providers, a JavaScript extension runtime. One of the two systems nerv was designed from."],
-  ["<b>deepseek</b>", "layered crates", "8,390 lines in strict layers — contracts, execution, services, adapters, assembly, apps — with the layering checked on every pull request. Small, disciplined, and does much less."],
-  ["<b>nerv</b>", "four processes", "126,026 lines across four programs that share no code and talk over argv, a pipe and a socket. Each is useful, and testable, with the others absent."],
+  ["<b>pi-ts</b>", "11 npm packages", "150,756 production lines, 6,286 commits. A package graph held by the npm resolver, on the critical path of every build."],
+  ["<b>deepseek-ts</b>", "255 packages", "307,345 lines, 15,210 commits, plus a vendored dependency-injection framework and 989 rows of YAML that decide what is assembled."],
+  ["<b>nerv</b>", "25 crates, 4 repos", "72,532 lines at the time of measurement, 407 commits, nine days old. Four programs that share no code."],
 ])}
+${note("<b>Nine days against fifteen thousand commits.</b> Every claim below of the form “this discipline has held” is a prediction, and the discount cuts both ways: nerv accumulated six dead dependency edges out of fifty-nine in nine days, which is a faster drift rate than deepseek-ts's 282 of 1,304 over 15,210 commits. Claims about what the compiler <i>refuses</i> are not subject to it.")}
 
       <h2 id="glance">At a glance</h2>
-      <p>Measured from the checkouts, today. Rust only, tests included, generated and vendored
-      trees excluded.</p>
-${table(["", "pi", "deepseek", "nerv"], [
-  ["lines", "983,588", "8,390", "126,026"],
-  ["files", "682", "43", "442"],
-  ["largest file", "<b>36,158</b>", "662", "<b>783</b>"],
-  ["files over 800 lines", "<b>313</b>", "0", "<b>0 of 442</b>"],
-  ["processes at rest", "1", "1", "3"],
-  ["providers", "103, in Rust", "1", "7, in Lua"],
-  ["adding a wire protocol", "a module and a rebuild", "a new crate", "<b>a Lua table, no rebuild</b>"],
-  ["permission model", "3 modes, not persisted", "<b>none</b>", "<b>4 verbs × 5 widths, with a ledger</b>"],
-  ["OS sandbox", "<b>none</b>", "none", "<code>bwrap</code>, through the process transport"],
-  ["boundary enforced by", "<code>pub</code> and convention", "85 lines of Python in CI", "no dependency edge exists to widen"],
-  ["peer sessions", "parent-spawned children", "none", "a socket, two walls, a shipped tool"],
-  ["memory layer", "none", "none", "a separate program with its own store"],
-])}
-${note("<b>The largest file is the number that decides how a codebase is read.</b> pi's <code>extensions_js.rs</code> is 36,158 lines — nobody holds that in their head, so it is edited by search. nerv's rule is 800 lines, enforced by a gate on the merge path, and all 442 files are under it. deepseek needs no gate: it is small enough that the question has not come up.")}
-
-      <h2 id="took">What was taken from each</h2>
-      <ul class="plain">
-        <li><b>From deepseek, the idea that a rule is not a rule until it is a merge barrier.</b>
-        Its architectural invariant is 85 lines of Python running between <code>fmt</code> and
-        <code>clippy</code>. Mechanically it is far weaker than nerv's gate scripts — and it was
-        strictly more valuable, because for a while ours ran only on a laptop. A gate that is not
-        a barrier is a personal ritual.</li>
-        <li><b>From pi, that a boundary needs a second implementation.</b> A protocol with one
-        implementation is a function call with extra steps: nothing forces the host to say what it
-        means. magi ships a second tool peer in Lua, deliberately unlike the first.</li>
-        <li><b>From pi, content-hashing what you are about to run.</b> Trust bound to the binary,
-        re-checked before spawn, rather than to a name resolved off <code>$PATH</code>.</li>
-        <li><b>From deepseek, one spawn site with both a timeout and a kill.</b> Its entire tree
-        spawns a child in exactly one place, and that place has both guards in sixty lines.</li>
-      </ul>
-
-      <h2 id="left">What was deliberately left</h2>
-${table(["not taken", "why"], [
-  ["pi's 103-row provider table", "hand-written Rust per provider, plus failover chains and a credential-rotation ring. Seven providers in Lua answer the same question, and adding one needs no rebuild."],
-  ["a vendored tokenizer", "pi vendors one, does not compile it, and then measures with <code>len()/4</code> anyway"],
-  ["the JavaScript extension runtime", "around 160k lines, with a Node compatibility layer of 107 embedded modules"],
-  ["a background compaction worker, a resource governor, a scheduler", "roughly 11k lines solving problems a 295-line compactor does not have"],
-  ["credential scavenging from other agents' config files", "reading another program's secrets because they happen to be on the same disk"],
-  ["substring-prose error classification", "a provider failure is classified structurally here, which is simply better"],
+      <p>Every number measured on the checkouts, not read off documentation.</p>
+${table(["", "pi-ts", "deepseek-ts", "nerv"], [
+  ["unit", "npm package", "npm package", "cargo crate"],
+  ["units", "11", "255", "25, in 4 workspaces"],
+  ["median unit size", "1,966", "<b>549</b>", "2,138"],
+  ["largest unit", "<b>70,067</b>", "15,593", "9,004"],
+  ["largest file", "6,592", "6,443", "<b>783</b>"],
+  ["files ≥ 800 lines", "48 of 667", "50 of 1,592", "<b>0 of 421</b>"],
+  ["build ceremony per unit", "77 lines", "95 lines", "<b>20 lines</b>"],
+  ["declared edges per kLOC", "0.14", "<b>4.24</b>", "0.81"],
+  ["undeclared test edges", "4 sites", "<b>76, across 50 packages</b>", "<b>0 — structurally impossible</b>"],
+  ["lines compiled to test one unit", "a whole package — up to 70,067", "~22,000", "<b>~8,200</b>"],
+  ["what refuses an undeclared edge", "a script, at pre-commit and in CI", "a gate that <b>writes the edge into your manifest</b>", "<b>the compiler, always</b>"],
 ])}
 
-      <h2 id="better">Where the others are better</h2>
-      <p>Written down because a comparison that only flatters the thing writing it is an
-      advertisement.</p>
-      <ul class="plain">
-        <li><b>pi's deadlines are compiler-enforced.</b> Every command variant carries a
-        <code>deadline</code>, so a caller physically cannot cross its internal boundary without
-        stating one. nerv has a deadline on the memory socket and <b>none in any wire type</b>.</li>
-        <li><b>pi's compaction is token-aware and never splits a tool call from its result</b>,
-        with a four-rung degradation ladder. nerv keeps a fixed number of entries and measures in
-        characters over four.</li>
-        <li><b>pi analyses a command before running it.</b> nerv analyses nothing: it decides
-        <i>whether</i> an action is permitted, not whether it is wise.</li>
-        <li><b>pi's file open is genuinely hardened against the race</b> — canonicalise, open with
-        <code>O_NOFOLLOW</code>, re-stat the descriptor, refuse if it moved. nerv normalises
-        lexically and then reads.</li>
-        <li><b>pi audits every approval, including the automatic ones.</b> A grant hit here returns
-        quietly, so “what did this session do under standing grants” has no answer.</li>
-        <li><b>pi crash-tests its durability</b> by hard-exiting the process at named boundaries.
-        nerv's durable write is a buffer flush; nothing calls <code>sync_data</code>.</li>
-        <li><b>deepseek's whole suite runs without an API key</b>, so its provider path is exercised
-        in CI rather than skipped.</li>
-      </ul>
-${note("<b>This list is the point of the exercise.</b> It was produced by reading both systems against ours line by line, and several items on it have since been fixed — the gates became a merge barrier, secrets are masked out of the transcript, a chained command no longer passes as its first word. The ones above are the ones still true.")}
+      <h2 id="verdict">The verdict, in one sentence</h2>
+      <p>nerv owns <b>the only module boundary of the three that cannot be crossed by accident</b>,
+      and — at the time of the analysis — the only enforcement tier that ran nowhere but a
+      developer's laptop.</p>
+      <p>Verified by writing the violation rather than reasoning about it:</p>
+      <pre>error[E0433]: failed to resolve: use of unresolved module or unlinked crate <span class="a">magi_host</span></pre>
+      <p>In pi-ts the same violation type-checks clean and fails at a consumer's runtime. In
+      deepseek-ts it type-checks clean through a match-all alias map, and the gate's remedy is to
+      <b>add the edge to your manifest for you</b>. Across programs it is stronger still: no
+      manifest in the four workspaces names a sibling, so violating that boundary means editing a
+      different repository.</p>
 
-      <h2 id="method">How it was measured</h2>
-      <p>Both systems are checked out and read, in Rust and in their original TypeScript. Counts
-      come from the files git tracks, with generated and vendored trees excluded, and were taken
-      again the day this page was written rather than copied from the analysis they came from.</p>
-      <p>Where a claim is about behaviour rather than size, it was checked by running the thing:
-      a grant offered a hostile command line, a socket asked in one encoding and answered in
-      another, a harness killed outright to see what survived it.</p>
+      <h2 id="deeper">Read on</h2>
+${table(["", ""], [
+  ['<a href="rewrite.html">what survived the rewrite</a>', "both originals were rewritten in Rust. Only the boundaries that were already <i>data</i> came through — which is the most useful thing in this comparison."],
+  ['<a href="modularity.html">what a module is</a>', "units, edges, and what refuses a violation at each of the three"],
+  ['<a href="permissions.html">three bets on safety</a>', "permission models, and what auditing ours found"],
+  ['<a href="providers.html">where vendor knowledge lives</a>', "one question, and a tenfold difference in what the answer costs"],
+])}
 `,
 });
 
 PAGES.push({
-  at: "compared/boundaries.html",
+  at: "compared/rewrite.html",
   section: "cmp",
-  nav: "boundaries",
-  title: "Where a boundary goes",
+  nav: "what survived",
+  title: "What survived the rewrite",
   blurb:
-    "Three answers to one question: where does a boundary go, and what makes it real? One " +
-    "address space, twenty crates checked by a script, or four programs held apart by the kernel.",
+    "Both originals were rewritten in Rust. Comparing each pair is a controlled experiment in " +
+    "which kinds of boundary survive a change of language — and the answer is narrow.",
   body: `
-      <h2 id="three">The three answers</h2>
-${table(["", "boundary drawn by", "enforced by"], [
-  ["<b>pi</b>", "<code>pub</code> and convention, in one address space", "nothing mechanical. 145 <code>pub mod</code> and 2,194 <code>pub fn</code> against 192 <code>pub(crate) fn</code> — nothing would fail if the terminal called a provider's internals directly."],
-  ["<b>deepseek</b>", "twenty crates in strict ranks", "85 lines of Python, on every pull request, between <code>fmt</code> and <code>clippy</code>"],
-  ["<b>nerv</b>", "four programs on sockets and pipes", "the kernel. There is no dependency edge to widen: no Cargo edge exists between magi and any sibling."],
+      <h2 id="what">What happened to each</h2>
+${table(["", "before", "after"], [
+  ["<b>pi</b>", "11 npm packages, 150,756 lines", "<b>one crate.</b> 145 <code>pub mod</code>, no workspace key, and a single 36,158-line file."],
+  ["<b>deepseek</b>", "255 packages and a vendored DI framework, 307,345 lines", "20 crates, 8,390 lines, in two commits. The framework reduced to one trait that always says no."],
 ])}
-      <p>The middle row is the one worth arguing with. deepseek's check is mechanically the
-      weakest of the three — it expresses acyclicity by rank rather than the architecture, and
-      <code>adapters</code> sits <i>above</i> <code>services</code>, so an adapter may legally do
-      its own filesystem work. It was still, for a while, the most valuable, because it was the
-      only one that was a <b>merge barrier</b>. nerv's gates were better designed and ran on a
-      laptop. A gate that is not a barrier is a personal ritual.</p>
-${note("<b>The strongest boundary is the one with nothing to widen.</b> <code>grep</code> the four manifests for a sibling's name and nothing comes back. No <code>pub</code> to loosen, no rank to game, no refactor that quietly erodes it. That is not discipline — it is the absence of an option.")}
+      <p>deepseek's 39-fold shrink measures <b>scope abandoned</b>, not modularity won — its own
+      README says as much: <i>“This is not a Cordis port.”</i> pi's is the interesting one, because
+      nothing was abandoned. The packages simply stopped existing.</p>
 
-      <h2 id="inside">Layers as well as processes</h2>
-      <p>nerv is not “processes instead of layers”. magi is eleven crates with a strictly acyclic
-      graph; balthasar is twelve. The two enforcement mechanisms are different — Cargo for the
-      inner graph, the kernel for the outer — and that is the right way round: the compiler is
-      good at the thing it can see, and useless at the thing it cannot.</p>
-      <p><a href="../architecture/inside.html">The inner graphs are drawn here</a>, read from the
-      repositories rather than by hand.</p>
+      <h2 id="why">Why pi's boundary evaporated</h2>
+      <p>pi-ts's package boundary was not held by discipline or by review. It was held by <b>the npm
+      resolver</b>, which sits on the critical path of every build, plus a script that parsed every
+      build program with the compiler's own API — at pre-commit <i>and</i> in CI.</p>
+      <p>Rust has exactly one construct with that resolver property, and it is the crate.
+      <b>Inside a crate there is no resolver at all.</b> So the rewrite did not weaken the
+      eleven-package graph; it deleted it. Violating any conceptual boundary in pi today costs
+      seven keystrokes and nothing fails.</p>
+      <p>The measurement: under nerv's own hygiene rules, pi now holds a mutually recursive core of
+      <b>23 modules</b> on the strict reading and 57 on the broad one.</p>
+${note("<b>And pi is not a project that skipped its gates.</b> Its module-reachability check runs in CI and passes cleanly at 240,000 lines: 144 declared, 141 reachable, 0 unreachable. It built the <b>reachability</b> gate and never built the <b>direction</b> gate — and a 57-module cycle is maximally reachable. nerv's own <code>gate-reachable</code> has exactly the same blind spot, which is why <code>gate-cycles</code> was written.")}
 
-      <h2 id="buys">What the split actually buys</h2>
+      <h2 id="invariant">The invariant</h2>
+      <p><b>Only the boundaries that were already data survived.</b> The npm package graph, the
+      entry-file budgets, the dependency-injection container, the import-closure verifier — deleted,
+      stubbed, or rebuilt at a fraction of their expressiveness. What translated intact was
+      <i>declared dependencies between compilation units</i>, because Cargo implements it, and a
+      YAML patch file, because it is a file.</p>
+      <p>Which puts a sharp question to nerv: what here is data?</p>
+${table(["", "would survive a rewrite"], [
+  ["the Lua layer — 9,034 lines across four programs", "<b>yes.</b> Tool declarations, provider catalogs, wire protocols and client stubs are files, not code."],
+  ["the socket and pipe protocols", "<b>yes.</b> A shape on a wire is a shape on a wire."],
+  ["the crate graph inside each program", "only if the next language has a resolver at that granularity"],
+  ["the module structure inside a crate", "<b>no.</b> This is exactly what pi lost."],
+])}
+      <p>The Lua layer is the closest thing in any of the six trees to the one deepseek-ts mechanism
+      that came through its rewrite intact. That is an argument for putting more in it, not less.</p>
+
+      <h2 id="unit">The unit you pick is permanent</h2>
+      <p>pi chose <code>pub mod</code> in its first commit. Five thousand commits later there is no
+      path back — nothing in the tree even discusses the alternative. A crate costs twenty lines of
+      manifest.</p>
+      <p>nerv's own tree shows the same force at work: <b>the two programs with production module
+      cycles are exactly the two with no gates</b>. That is not a coincidence about those two
+      programs; it is what happens wherever nothing refuses.</p>
+`,
+});
+
+PAGES.push({
+  at: "compared/modularity.html",
+  section: "cmp",
+  nav: "what a module is",
+  title: "What a module is",
+  blurb:
+    "Three systems, three units, three things that refuse a violation — and only one of them " +
+    "refuses at compile time.",
+  body: `
+      <h2 id="refuses">What refuses a violation</h2>
+${table(["", "the unit", "what refuses", "when"], [
+  ["<b>pi-ts</b>", "npm package", "a script parsing every build file with the compiler API", "pre-commit <b>and</b> CI <b>and</b> publish — the same nine-step chain in all three"],
+  ["<b>deepseek-ts</b>", "npm package", "a gate that checks the manifest against real imports", "CI only — and its remedy <b>rewrites your manifest to match</b>"],
+  ["<b>nerv</b>", "cargo crate", "<b>the compiler</b>", "every build, always. There is no mode in which it does not."],
+])}
+      <p>pi-ts's is the discipline worth envying: because every rule runs at commit time and not
+      only in CI, its 21-edge graph has <b>zero cycles</b>, no relative import escaping a package,
+      and declared dependencies matching actual imports exactly. nerv's declared graph was ten
+      per cent fiction at the time of measurement — six declared-but-never-imported edges of
+      fifty-nine.</p>
+
+      <h2 id="below">Nothing constrains anything below the crate</h2>
+      <p>This is the honest gap. Cargo enforces the crate edge and enforces nothing inside it, so a
+      single crate can grow any shape it likes. pi-ts constrains boundary <i>depth</i> on a walked
+      graph with a stated cost model, and can mark a subtree as excluded-from-build-but-imported —
+      making it a boundary rather than a comment. nerv has no equivalent.</p>
+      <p>What nerv legislates instead is <b>one ceiling: files</b>, at 800 lines, and it holds
+      across every file in every repository. But deepseek-ts keeps 97% of its files under 800 with
+      <b>no file-size gate at all</b> — so the rule buys the absence of a long tail rather than a
+      better median. And the <i>unit</i> is unruled: two crates are half of magi.</p>
+${note("<b>A number that was reported wrongly the first time.</b> Build ceremony was quoted as 31.7% against 0.8% until it was checked — three-quarters of that gap was READMEs and translations, which scores nerv's <i>absence of documentation</i> as a win. Like for like it is 20 lines per crate against 57 per npm package. A comparison that faults undocumented seams elsewhere cannot also bank their absence as a saving.")}
+
+      <h2 id="test">What a test can reach</h2>
+      <p>The sharpest measurable difference, and the one that compounds daily.</p>
+${table(["", "to test one unit, this compiles"], [
+  ["pi-ts", "the whole package — up to <b>70,067 lines</b>"],
+  ["deepseek-ts", "about <b>22,000</b>, a median of eighteen packages"],
+  ["nerv", "about <b>8,200</b>, a median of two crates — and all 25 pass their suites alone"],
+])}
+      <p>A test's reach here is exactly its declared dependencies and dev-dependencies. It is not a
+      convention: there is no way to import something you did not declare. deepseek-ts has
+      <b>76 undeclared test edges across 50 packages</b>, because its gate does not glob the test
+      tree.</p>
+
+      <h2 id="process">What a process boundary buys that a package edge cannot</h2>
       <ul class="plain">
-        <li><b>Crash isolation that is not a promise.</b> In pi, JavaScript extensions run in the
-        agent's address space with the agent's uid. In nerv, a tool that segfaults costs one wait
-        and an error string.</li>
-        <li><b>Independent evolution without a shared type.</b> magi skips a line from melchior it
-        cannot parse rather than failing the turn, <i>because a newer melchior may say things this
-        one has no name for</i>. Each sibling is optional, and the degradation is written down and
-        tested.</li>
-        <li><b>A failure taxonomy the boundary forces you to write.</b> Four faults where an
-        in-process call would have one <code>Result</code>: nothing answered, the verb was
-        declined, the write did not land, the reply was the wrong shape. The split is what makes
-        the difference between “it said no” and “it is not there” unavoidable.</li>
-        <li><b>A testing seam you cannot accidentally close.</b> magi deleted its daemon and
-        <i>kept the socket</i>, because that is what the replay host answers — a UI that could
-        only talk to something in its own address space could not be pointed at a recording.</li>
+        <li><b>Absence as an ordinary value.</b> A missing sibling returns an empty list or a
+        <code>None</code>, not an error path — so “not installed” is the same shape as “nothing to
+        say”.</li>
+        <li><b>A typed refusal.</b> Four faults where an in-process call has one result, and a
+        method separating “this cost you a feature” from “this cost you a turn”.</li>
+        <li><b>Authority split by link.</b> casper answers read-only verbs on its socket and will
+        run a command only when spawned. The same program, two different authorities, decided by
+        how you reached it.</li>
       </ul>
-
-      <h2 id="cost">What it costs</h2>
-      <p>Three processes at rest instead of one, one more per turn, one more per tool call. A
-      measured 13.8 ms per <code>casper run</code>. And a discipline that has to be applied at
-      every crossing rather than once:</p>
-      <p><b>A process boundary contains a failure only if every crossing has a deadline, a kill
-      and a retry story.</b> nerv has six crossings and has not applied that evenly. The tool-peer
-      crossing is exemplary — a reader thread turning a blocking pipe into a channel so the wait
-      can be bounded, a host-enforced ceiling, a cooperative cancel then a grace then a kill. The
-      per-tool-call crossing, checked today, still has no timeout.</p>
-${note("<b>deepseek does this better than either of the others, in sixty lines.</b> Its entire tree spawns a child process in exactly one place, and that place sets both a kill-on-drop and a mandatory timeout. One spawn site, both guards. nerv has around ten spawn sites.")}
-
-      <h2 id="portable">Linux only, on purpose</h2>
-      <p>Fifty-nine Unix sockets, forty-six references to the runtime directory, fourteen to
-      <code>SO_PEERCRED</code>, nineteen to <code>/proc</code> — and <b>two</b> platform guards in
-      the whole tree, because there is nothing to guard against. pi targets three platforms and
-      pays for it in the terminal layer, which is most of what makes that code hard to follow.</p>
-      <p>The honest cost: macOS has Unix sockets but no <code>SO_PEERCRED</code>, no
-      <code>/proc</code>, no <code>pidfd</code> and no namespaces — so peer identity, the socket
-      sweep, the parent-death lifetime and the entire sandboxing story would each need a second
-      implementation, and the last has no equivalent to write. Porting is a project, not a flag.</p>
+      <p>The whole cross-program surface in magi is 1,632 lines — under five per cent of
+      production — carrying in one crate what deepseek-ts spreads across seventeen.</p>
 `,
 });
 
@@ -1243,7 +1248,8 @@ PAGES.push({
   title: "Three bets on safety",
   blurb:
     "pi bet on breadth plus in-process hardening. deepseek bet on layering, and has no " +
-    "permission layer at all. nerv bet on the question a tool is made to ask.",
+    "permission layer at all. nerv bet on the question a tool is made to ask. Measured against " +
+    "the Rust ports, which is where these layers are comparable at all.",
   body: `
       <h2 id="shape">The shape of each</h2>
 ${table(["", "pi", "deepseek", "nerv"], [
@@ -1322,7 +1328,7 @@ PAGES.push({
   title: "Where the vendor knowledge lives",
   blurb:
     "One question — where does the knowledge of how to talk to a vendor live? — and a tenfold " +
-    "difference in what the answer costs.",
+    "difference in what the answer costs. Measured against the Rust ports.",
   body: `
 ${table(["", "pi", "deepseek", "nerv"], [
   ["where it lives", "in-process: thirteen protocol modules and a 103-row table", "one crate behind a port trait", "a separate program, spawned per turn"],

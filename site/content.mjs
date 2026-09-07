@@ -1163,3 +1163,210 @@ ${note("<b>This list is the point of the exercise.</b> It was produced by readin
       another, a harness killed outright to see what survived it.</p>
 `,
 });
+
+PAGES.push({
+  at: "compared/boundaries.html",
+  section: "cmp",
+  nav: "boundaries",
+  title: "Where a boundary goes",
+  blurb:
+    "Three answers to one question: where does a boundary go, and what makes it real? One " +
+    "address space, twenty crates checked by a script, or four programs held apart by the kernel.",
+  body: `
+      <h2 id="three">The three answers</h2>
+${table(["", "boundary drawn by", "enforced by"], [
+  ["<b>pi</b>", "<code>pub</code> and convention, in one address space", "nothing mechanical. 145 <code>pub mod</code> and 2,194 <code>pub fn</code> against 192 <code>pub(crate) fn</code> — nothing would fail if the terminal called a provider's internals directly."],
+  ["<b>deepseek</b>", "twenty crates in strict ranks", "85 lines of Python, on every pull request, between <code>fmt</code> and <code>clippy</code>"],
+  ["<b>nerv</b>", "four programs on sockets and pipes", "the kernel. There is no dependency edge to widen: no Cargo edge exists between magi and any sibling."],
+])}
+      <p>The middle row is the one worth arguing with. deepseek's check is mechanically the
+      weakest of the three — it expresses acyclicity by rank rather than the architecture, and
+      <code>adapters</code> sits <i>above</i> <code>services</code>, so an adapter may legally do
+      its own filesystem work. It was still, for a while, the most valuable, because it was the
+      only one that was a <b>merge barrier</b>. nerv's gates were better designed and ran on a
+      laptop. A gate that is not a barrier is a personal ritual.</p>
+${note("<b>The strongest boundary is the one with nothing to widen.</b> <code>grep</code> the four manifests for a sibling's name and nothing comes back. No <code>pub</code> to loosen, no rank to game, no refactor that quietly erodes it. That is not discipline — it is the absence of an option.")}
+
+      <h2 id="inside">Layers as well as processes</h2>
+      <p>nerv is not “processes instead of layers”. magi is eleven crates with a strictly acyclic
+      graph; balthasar is twelve. The two enforcement mechanisms are different — Cargo for the
+      inner graph, the kernel for the outer — and that is the right way round: the compiler is
+      good at the thing it can see, and useless at the thing it cannot.</p>
+      <p><a href="../architecture/inside.html">The inner graphs are drawn here</a>, read from the
+      repositories rather than by hand.</p>
+
+      <h2 id="buys">What the split actually buys</h2>
+      <ul class="plain">
+        <li><b>Crash isolation that is not a promise.</b> In pi, JavaScript extensions run in the
+        agent's address space with the agent's uid. In nerv, a tool that segfaults costs one wait
+        and an error string.</li>
+        <li><b>Independent evolution without a shared type.</b> magi skips a line from melchior it
+        cannot parse rather than failing the turn, <i>because a newer melchior may say things this
+        one has no name for</i>. Each sibling is optional, and the degradation is written down and
+        tested.</li>
+        <li><b>A failure taxonomy the boundary forces you to write.</b> Four faults where an
+        in-process call would have one <code>Result</code>: nothing answered, the verb was
+        declined, the write did not land, the reply was the wrong shape. The split is what makes
+        the difference between “it said no” and “it is not there” unavoidable.</li>
+        <li><b>A testing seam you cannot accidentally close.</b> magi deleted its daemon and
+        <i>kept the socket</i>, because that is what the replay host answers — a UI that could
+        only talk to something in its own address space could not be pointed at a recording.</li>
+      </ul>
+
+      <h2 id="cost">What it costs</h2>
+      <p>Three processes at rest instead of one, one more per turn, one more per tool call. A
+      measured 13.8 ms per <code>casper run</code>. And a discipline that has to be applied at
+      every crossing rather than once:</p>
+      <p><b>A process boundary contains a failure only if every crossing has a deadline, a kill
+      and a retry story.</b> nerv has six crossings and has not applied that evenly. The tool-peer
+      crossing is exemplary — a reader thread turning a blocking pipe into a channel so the wait
+      can be bounded, a host-enforced ceiling, a cooperative cancel then a grace then a kill. The
+      per-tool-call crossing, checked today, still has no timeout.</p>
+${note("<b>deepseek does this better than either of the others, in sixty lines.</b> Its entire tree spawns a child process in exactly one place, and that place sets both a kill-on-drop and a mandatory timeout. One spawn site, both guards. nerv has around ten spawn sites.")}
+
+      <h2 id="portable">Linux only, on purpose</h2>
+      <p>Fifty-nine Unix sockets, forty-six references to the runtime directory, fourteen to
+      <code>SO_PEERCRED</code>, nineteen to <code>/proc</code> — and <b>two</b> platform guards in
+      the whole tree, because there is nothing to guard against. pi targets three platforms and
+      pays for it in the terminal layer, which is most of what makes that code hard to follow.</p>
+      <p>The honest cost: macOS has Unix sockets but no <code>SO_PEERCRED</code>, no
+      <code>/proc</code>, no <code>pidfd</code> and no namespaces — so peer identity, the socket
+      sweep, the parent-death lifetime and the entire sandboxing story would each need a second
+      implementation, and the last has no equivalent to write. Porting is a project, not a flag.</p>
+`,
+});
+
+PAGES.push({
+  at: "compared/permissions.html",
+  section: "cmp",
+  nav: "permissions",
+  title: "Three bets on safety",
+  blurb:
+    "pi bet on breadth plus in-process hardening. deepseek bet on layering, and has no " +
+    "permission layer at all. nerv bet on the question a tool is made to ask.",
+  body: `
+      <h2 id="shape">The shape of each</h2>
+${table(["", "pi", "deepseek", "nerv"], [
+  ["permission model", "3 global modes, allow or deny, not persisted", "<b>none</b>", "4 verbs × 5 widths, with a session ledger"],
+  ["dangerous-command analysis", "a shell-out, or ten in-tree danger classes", "none", "<b>none</b>"],
+  ["OS sandbox", "<b>none</b>, in 527k lines", "none", "<code>bwrap</code>, through the process transport"],
+  ["secrets masking", "mask, restore for the human, re-mask on the way out", "none", "masked by value before anything is journalled"],
+  ["path confinement", "<code>O_NOFOLLOW</code>, re-stat the descriptor, reject if it moved", "lexical prefix, no canonicalise", "lexical normalise, then prefix"],
+  ["tool declaration", "one implementation <b>per tool</b> — 38 of them", "one per tool", "one <b>per transport</b> — five"],
+])}
+
+      <h2 id="transport">One implementation per transport</h2>
+      <p>That last row is nerv's one genuinely better idea, and it is architectural rather than
+      stylistic: <b>adding a way to reach a tool cannot add a way to run one.</b> Every
+      cross-cutting concern lives at a single funnel, and there is exactly one place to put it —
+      the output cap, the schema check, the argument repair, the secrets mask.</p>
+      <p>pi's equivalent of the output cap is seven hundred lines of spill machinery <i>inside</i>
+      its tool file, with its own redaction engine, because pi's tools each produce output
+      independently. deepseek has no cap at all.</p>
+
+      <h2 id="injection">The claim, and its limit</h2>
+      <p>nerv's <code>command</code> transport runs a program with an <b>argument vector</b> built
+      from the call. No shell, so a value containing <code>;</code> or <code>$(…)</code> is one
+      argument, verbatim. It is the only one of the three where the default way to declare a new
+      tool cannot be command-injected.</p>
+      <p><b>That is a claim about the transport, not about the shipped tools.</b> The shell tool
+      nerv actually ships is a Lua declaration that interpolates the model's string into a
+      compound <code>sh -c</code>. It is a shell string end to end, exactly like pi's and
+      deepseek's. Both facts belong in the ledger.</p>
+
+      <h2 id="widths">Why five widths</h2>
+      <p>One request can be answered at several widths, because how much you want to grant depends
+      on what was asked. Saying yes to <i>this exact command, once</i> and yes to <i>anything under
+      this directory, forever</i> are both reasonable answers to the same prompt — and a system
+      offering only one of them will be answered carelessly.</p>
+      <p>pi has three global modes and no persistence, so “allow always” is not expressible; the
+      pressure that creates is toward the mode that stops asking. deepseek asks nothing.
+      <a href="../guides/permissions.html">The widths are set out here.</a></p>
+
+      <h2 id="found">What auditing this found</h2>
+      <p>The design being the best of the three did not stop the implementation being weaker than
+      it reads. Three holes were verified by running them, not by reading:</p>
+      <ul class="plain">
+        <li><b>A directory grant compared unnormalised paths</b>, so a grant on <code>work</code>
+        covered <code>work/sub/../../secret</code>. Fixed: paths are normalised before the action
+        is built.</li>
+        <li><b>Confinement was silently dropped whenever anybody was watching.</b> It applied only
+        to headless sessions — the exact case where nobody is there to catch anything. Fixed.</li>
+        <li><b>A grant on <code>git</code> covered <code>git status; rm -rf /</code></b>, because
+        the program was the first word and the command line sat in the rest. Fixed: a command
+        carrying a shell metacharacter is covered by no program grant, so it is asked about
+        instead.</li>
+      </ul>
+${note("<b>That last one was published on this site as already true before it was.</b> It was written from the design and never checked against the code. It is true now — a grant that answers “any <code>git</code> command” stops at the first <code>;</code> — and the way it was found is the argument for the whole exercise: pi's equivalent check is about fifteen lines and six tests, and reading it is what exposed the gap.")}
+
+      <h2 id="still">Still open</h2>
+      <ul class="plain">
+        <li><b>Nothing analyses a command before running it.</b> nerv decides whether an action is
+        permitted, not whether it is wise. pi has ten danger classes.</li>
+        <li><b>A grant on <code>sh</code> is an unbounded shell by construction</b>, not by
+        bypass — which is what the person asked for, and worth knowing they asked it.</li>
+        <li><b>Automatic approvals are not audited.</b> A ledger hit returns quietly, so “what did
+        this session do under standing grants” has no answer. pi audits every decision, including
+        the ones nobody saw.</li>
+        <li><b>File opens are not hardened against the race.</b> Lexical normalise, then read. pi
+        canonicalises, opens with <code>O_NOFOLLOW</code>, re-stats the descriptor and refuses if
+        it moved.</li>
+      </ul>
+`,
+});
+
+PAGES.push({
+  at: "compared/providers.html",
+  section: "cmp",
+  nav: "providers",
+  title: "Where the vendor knowledge lives",
+  blurb:
+    "One question — where does the knowledge of how to talk to a vendor live? — and a tenfold " +
+    "difference in what the answer costs.",
+  body: `
+${table(["", "pi", "deepseek", "nerv"], [
+  ["where it lives", "in-process: thirteen protocol modules and a 103-row table", "one crate behind a port trait", "a separate program, spawned per turn"],
+  ["size", "~9,700 production lines", "1,121 lines", "~5,300 production lines, plus 943 of Lua"],
+  ["providers shipped", "103 — 88 of them pure data", "1", "8"],
+  ["wire protocols", "13 native modules", "1", "8 Lua tables"],
+  ["adding a compatible provider", "~17 lines of Rust data, then recompile", "not a supported operation", "~10 lines of Lua, no rebuild"],
+  ["adding a <b>new protocol</b>", "a module, a route kind, a normaliser, recompile", "a new crate", "<b>a <code>do … end</code> block, no rebuild</b>"],
+  ["HTTP", "hand-rolled HTTP/1.1, 3,034 lines", "a library", "a library"],
+  ["does it stream", "yes", "<b>no</b>", "yes, end to end, across the pipe"],
+  ["credential store", "13,156 lines: four OAuth flows, an AWS chain, an SSO cache, a rotation ring", "environment variables, 83 lines", "environment variables and one OAuth store"],
+])}
+
+      <h2 id="same">The same shape, at a tenth of the cost</h2>
+      <p>pi and nerv arrive at structurally similar layers — a catalog of vendors as data, a small
+      set of protocol adapters, one neutral message model. pi pays roughly ten times for it, and
+      <b>most of that is not the process boundary</b>. It is the difference between “a protocol is
+      a Rust module” and “a protocol is a Lua table”.</p>
+      <pre><span class="c">-- melchior/config/providers.lua — one provider, no rebuild</span>
+melchior.provider("deepseek", {
+  name = "DeepSeek", api = "openai-completions",
+  base_url = "https://api.deepseek.com",
+  auth = { kind = "api-key", vars = { "DEEPSEEK_API_KEY" } },
+  compat = { thinking_format = "deepseek" },
+  models = { { id = "deepseek-chat" } },
+})</pre>
+
+      <h2 id="best">The best idea in pi's provider layer</h2>
+      <p>Its table feeds everything else, including predicates that would otherwise be hardcoded
+      lists — “is this provider keyless” is <i>derived</i> from having no auth variables and no
+      auth header, so local runtimes work without being named anywhere — and including the
+      published documentation, rendered from the same table with a golden test on the output.
+      That is cheap and worth having.</p>
+
+      <h2 id="ours">What the separate process is for</h2>
+      <ul class="plain">
+        <li><b>One parser for every provider's stream</b>, on a correct argument, rather than four.</li>
+        <li><b>A typed failure class that reaches the loop and changes what the loop does</b> —
+        rather than a regular expression over the vendor's prose.</li>
+        <li><b>Retry and retraction as one end-to-end contract</b>: the screen is told to un-draw
+        what a failed attempt already streamed. Neither of the others has this.</li>
+        <li><b>Three protocol hostings sharing one body</b>, differing in about ten lines. pi's
+        equivalent for one vendor is 1,882.</li>
+      </ul>
+${note("<b>What was deliberately not taken:</b> the 103-row table itself, the hand-rolled HTTP client, the failover chains, the credential-rotation ring, and the credential scavenging that reads other agents' configuration files. Seven providers answer the same question, and the eighth costs ten lines.")}
+`,
+});

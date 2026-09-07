@@ -8,6 +8,7 @@ export const SECTIONS = [
   { key: "arch", name: "architecture", jp: "構造", home: "architecture/index.html" },
   { key: "prog", name: "the four", jp: "四機", home: "programs/magi.html" },
   { key: "guide", name: "guides", jp: "手引", home: "guides/install.html" },
+  { key: "cmp", name: "compared", jp: "比較", home: "compared/index.html" },
   { key: "ref", name: "reference", jp: "規格", home: "reference/wire.html" },
 ];
 
@@ -1064,5 +1065,101 @@ balthasar serve               <span class="c">listen for other programs</span>
 balthasar api &lt;VERB&gt; [ARGS]   <span class="c">answer one question, wire-shaped, and exit</span>
   --json | --cbor             <span class="c">which encoding a reply comes back in</span></pre>
 ${note("<b><code>--tied</code> is absent by default.</b> A balthasar started at a terminal or by a unit file is meant to outlive the thing that typed the command. magi passes it, naming its own process id, so the memory layer cannot outlive the window even if magi is killed outright.")}
+`,
+});
+
+// ------------------------------------------------------------------------------ compared -----
+PAGES.push({
+  at: "compared/index.html",
+  section: "cmp",
+  nav: "pi and deepseek",
+  title: "Measured against two others",
+  blurb:
+    "nerv was designed from two existing harnesses: a million-line single binary, and an eight " +
+    "thousand line strictly layered one. Every number here was measured, not read off a README.",
+  body: `
+      <h2 id="three">Three shapes</h2>
+${table(["", "", ""], [
+  ["<b>pi</b>", "one binary", "A ~1M-line Rust coding agent, around seven months old. Everything in one process: the UI, the turn loop, 103 providers, a JavaScript extension runtime. One of the two systems nerv was designed from."],
+  ["<b>deepseek</b>", "layered crates", "8,390 lines in strict layers — contracts, execution, services, adapters, assembly, apps — with the layering checked on every pull request. Small, disciplined, and does much less."],
+  ["<b>nerv</b>", "four processes", "126,026 lines across four programs that share no code and talk over argv, a pipe and a socket. Each is useful, and testable, with the others absent."],
+])}
+
+      <h2 id="glance">At a glance</h2>
+      <p>Measured from the checkouts, today. Rust only, tests included, generated and vendored
+      trees excluded.</p>
+${table(["", "pi", "deepseek", "nerv"], [
+  ["lines", "983,588", "8,390", "126,026"],
+  ["files", "682", "43", "442"],
+  ["largest file", "<b>36,158</b>", "662", "<b>783</b>"],
+  ["files over 800 lines", "<b>313</b>", "0", "<b>0 of 442</b>"],
+  ["processes at rest", "1", "1", "3"],
+  ["providers", "103, in Rust", "1", "7, in Lua"],
+  ["adding a wire protocol", "a module and a rebuild", "a new crate", "<b>a Lua table, no rebuild</b>"],
+  ["permission model", "3 modes, not persisted", "<b>none</b>", "<b>4 verbs × 5 widths, with a ledger</b>"],
+  ["OS sandbox", "<b>none</b>", "none", "<code>bwrap</code>, through the process transport"],
+  ["boundary enforced by", "<code>pub</code> and convention", "85 lines of Python in CI", "no dependency edge exists to widen"],
+  ["peer sessions", "parent-spawned children", "none", "a socket, two walls, a shipped tool"],
+  ["memory layer", "none", "none", "a separate program with its own store"],
+])}
+${note("<b>The largest file is the number that decides how a codebase is read.</b> pi's <code>extensions_js.rs</code> is 36,158 lines — nobody holds that in their head, so it is edited by search. nerv's rule is 800 lines, enforced by a gate on the merge path, and all 442 files are under it. deepseek needs no gate: it is small enough that the question has not come up.")}
+
+      <h2 id="took">What was taken from each</h2>
+      <ul class="plain">
+        <li><b>From deepseek, the idea that a rule is not a rule until it is a merge barrier.</b>
+        Its architectural invariant is 85 lines of Python running between <code>fmt</code> and
+        <code>clippy</code>. Mechanically it is far weaker than nerv's gate scripts — and it was
+        strictly more valuable, because for a while ours ran only on a laptop. A gate that is not
+        a barrier is a personal ritual.</li>
+        <li><b>From pi, that a boundary needs a second implementation.</b> A protocol with one
+        implementation is a function call with extra steps: nothing forces the host to say what it
+        means. magi ships a second tool peer in Lua, deliberately unlike the first.</li>
+        <li><b>From pi, content-hashing what you are about to run.</b> Trust bound to the binary,
+        re-checked before spawn, rather than to a name resolved off <code>$PATH</code>.</li>
+        <li><b>From deepseek, one spawn site with both a timeout and a kill.</b> Its entire tree
+        spawns a child in exactly one place, and that place has both guards in sixty lines.</li>
+      </ul>
+
+      <h2 id="left">What was deliberately left</h2>
+${table(["not taken", "why"], [
+  ["pi's 103-row provider table", "hand-written Rust per provider, plus failover chains and a credential-rotation ring. Seven providers in Lua answer the same question, and adding one needs no rebuild."],
+  ["a vendored tokenizer", "pi vendors one, does not compile it, and then measures with <code>len()/4</code> anyway"],
+  ["the JavaScript extension runtime", "around 160k lines, with a Node compatibility layer of 107 embedded modules"],
+  ["a background compaction worker, a resource governor, a scheduler", "roughly 11k lines solving problems a 295-line compactor does not have"],
+  ["credential scavenging from other agents' config files", "reading another program's secrets because they happen to be on the same disk"],
+  ["substring-prose error classification", "a provider failure is classified structurally here, which is simply better"],
+])}
+
+      <h2 id="better">Where the others are better</h2>
+      <p>Written down because a comparison that only flatters the thing writing it is an
+      advertisement.</p>
+      <ul class="plain">
+        <li><b>pi's deadlines are compiler-enforced.</b> Every command variant carries a
+        <code>deadline</code>, so a caller physically cannot cross its internal boundary without
+        stating one. nerv has a deadline on the memory socket and <b>none in any wire type</b>.</li>
+        <li><b>pi's compaction is token-aware and never splits a tool call from its result</b>,
+        with a four-rung degradation ladder. nerv keeps a fixed number of entries and measures in
+        characters over four.</li>
+        <li><b>pi analyses a command before running it.</b> nerv analyses nothing: it decides
+        <i>whether</i> an action is permitted, not whether it is wise.</li>
+        <li><b>pi's file open is genuinely hardened against the race</b> — canonicalise, open with
+        <code>O_NOFOLLOW</code>, re-stat the descriptor, refuse if it moved. nerv normalises
+        lexically and then reads.</li>
+        <li><b>pi audits every approval, including the automatic ones.</b> A grant hit here returns
+        quietly, so “what did this session do under standing grants” has no answer.</li>
+        <li><b>pi crash-tests its durability</b> by hard-exiting the process at named boundaries.
+        nerv's durable write is a buffer flush; nothing calls <code>sync_data</code>.</li>
+        <li><b>deepseek's whole suite runs without an API key</b>, so its provider path is exercised
+        in CI rather than skipped.</li>
+      </ul>
+${note("<b>This list is the point of the exercise.</b> It was produced by reading both systems against ours line by line, and several items on it have since been fixed — the gates became a merge barrier, secrets are masked out of the transcript, a chained command no longer passes as its first word. The ones above are the ones still true.")}
+
+      <h2 id="method">How it was measured</h2>
+      <p>Both systems are checked out and read, in Rust and in their original TypeScript. Counts
+      come from the files git tracks, with generated and vendored trees excluded, and were taken
+      again the day this page was written rather than copied from the analysis they came from.</p>
+      <p>Where a claim is about behaviour rather than size, it was checked by running the thing:
+      a grant offered a hostile command line, a socket asked in one encoding and answered in
+      another, a harness killed outright to see what survived it.</p>
 `,
 });

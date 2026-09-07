@@ -51,6 +51,8 @@
       --sessions &lt;DIR&gt;        <span class="c">where session journals live</span>
 
 magi doctor                   <span class="c">what a session here would be made of, without starting one</span>
+magi verbs                    <span class="c">what it answers, on each of its doors</span>
+magi acknowledge              <span class="c">clear the installed packages, so they may run</span>
 magi tools                    <span class="c">every tool the model can call, and how each is reached</span>
 magi models                   <span class="c">the providers and models melchior knows about</span>
 magi lua-api                  <span class="c">the Lua client library for magi's own surface</span>
@@ -61,7 +63,10 @@ magi fake-host                <span class="c">serve a recorded session, so the U
       <pre>casper tools                  <span class="c">every tool, with schemas</span>
 casper run &lt;tool&gt;             <span class="c">one call on stdin, one result on stdout</span>
 casper surface &lt;tool&gt;         <span class="c">frames both ways, for as long as it holds its rows</span>
-casper verbs                  <span class="c">what its socket answers</span>
+casper verbs                  <span class="c">what it answers, on each of its doors</span>
+casper needs                  <span class="c">what a coordinator may tell it</span>
+casper configure              <span class="c">take that configuration, as Lua on stdin</span>
+casper acknowledge            <span class="c">clear the installed packages, so their declarations may run</span>
   --json | --cbor             <span class="c">which encoding a reply comes back in</span></pre>
 
       <h2 id="melchior">melchior</h2>
@@ -72,6 +77,8 @@ melchior serve                <span class="c">bind this session's socket and ans
 melchior needs                <span class="c">what a coordinator may tell it</span>
 melchior configure            <span class="c">take that configuration, as Lua on stdin</span>
 melchior tool                 <span class="c">the agent surface, as a harness calls it</span>
+melchior verbs                <span class="c">what it answers, on each of its doors</span>
+melchior acknowledge          <span class="c">clear the installed packages, so their declarations may run</span>
   --json | --cbor             <span class="c">which encoding a reply comes back in</span></pre>
 
       <h2 id="balthasar">balthasar</h2>

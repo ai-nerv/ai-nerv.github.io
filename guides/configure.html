@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Configuration — nerv</title>
-<meta name="description" content="Lua, and a program rather than a data file: it may probe the machine, loop and branch. Nothing is discovered by scanning — a file the entry point does not name does not load.">
+<meta name="description" content="Lua, and a program rather than a data file: it may probe the machine, loop and branch. One entry point for what you name, and three directories for what you install.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;700&display=swap">
@@ -45,7 +45,7 @@
   </aside>
     <main>
       <h1>Configuration</h1>
-      <p class="lede">Lua, and a program rather than a data file: it may probe the machine, loop and branch. Nothing is discovered by scanning — a file the entry point does not name does not load.</p>
+      <p class="lede">Lua, and a program rather than a data file: it may probe the machine, loop and branch. One entry point for what you name, and three directories for what you install.</p>
 
       <div class="plate">
         <header><b>plate 11</b><span>load order, and where a project file is refused</span></header>
@@ -53,11 +53,10 @@
       </div>
 
       <h2 id="entry">The entry point</h2>
-      <pre><span class="c">-- ~/.config/magi/init.lua — the only entry point.</span>
-<span class="c">-- Nothing is discovered by scanning: a file not named here does not load.</span>
+      <pre><span class="c">-- ~/.config/magi/init.lua — what you name explicitly.</span>
+<span class="c">-- What you *install* is discovered: see writing a tool.</span>
 magi.load("clients/hexe.lua")
 magi.load("clients/oslo.lua")
-magi.load("clients/balthasar.lua")
 magi.load("tools.lua")
 
 magi.model   = "openrouter/anthropic/claude-sonnet-4.6"
@@ -76,7 +75,7 @@ magi.allow   = { … }                    <span class="c">-- answered in advance
           <tr><td><code>magi.project</code></td><td class="wrap-ok">what this session is called, in the name other sessions see</td></tr>
           <tr><td><code>magi.agent_talk</code></td><td class="wrap-ok">how far one session may reach another</td></tr>
           <tr><td><code>magi.ui</code></td><td class="wrap-ok">every colour, glyph and measurement the screen draws with</td></tr>
-          <tr><td><code>magi.melchior</code> · <code>magi.balthasar</code></td><td class="wrap-ok">settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two</td></tr>
+          <tr><td><code>magi.casper</code> · <code>magi.melchior</code> · <code>magi.balthasar</code></td><td class="wrap-ok">settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two</td></tr>
         </tbody>
       </table></div>
 
@@ -103,9 +102,16 @@ magi.allow   = { … }                    <span class="c">-- answered in advance
       anything the far side would not accept — a coordinator and a sibling disagreeing about what
       a name means is worth a line on stderr.</p>
       <pre>magi.balthasar = { promote_floor = 0.6 }
-magi.melchior  = { max_tokens = 8192 }</pre>
+magi.melchior  = { max_tokens = 8192 }
+magi.casper    = { tools = { dino = { off = true }, birdy = { hidden = true } } }</pre>
       <pre>$ balthasar needs      <span class="c"># what it will accept, in its own words</span>
-$ melchior needs</pre>
+$ melchior needs
+$ casper needs</pre>
+      <p>A setting the far side does not recognise comes back <b>named</b> rather than as a
+      generic refusal, because "refused" is not something a coordinator can act on. Its own
+      vocabulary, not magi's: renaming a setting on one side shows up as a line on stderr instead
+      of failing silently on the other.</p>
+      <div class="note"><b>A program spawned per call is told on every spawn.</b> <code>configure</code> sets something in the process that answers it — the whole of what a sibling needs when it is asked once and then runs for the session. casper is one process per call, so what magi decided rides on <i>every</i> spawn instead. Otherwise casper would report the setting taken and the next call would be a fresh process that had never heard of it.</div>
 
       <div class="next"><a href="install.html"><span class="lbl">back</span>install</a><a href="tools.html"><span class="lbl">next</span>writing a tool</a></div>
     </main>

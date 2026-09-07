@@ -394,9 +394,30 @@ ${table(["tools", "for"], [
   ["<code>hexe</code> <code>oslo</code> <code>session</code>", "asking the multiplexer, the shell, or the harness about themselves"],
   ["<code>dino</code> <code>birdy</code>", "two games, because a surface that can draw a game can draw anything"],
 ])}
-      <p>Every one is declared in <code>config/tools.lua</code>, in Lua, and nothing about them is
-      compiled in. A tool of your own goes in the same file — see
-      <a href="../guides/tools.html">writing a tool</a>.</p>
+      <p>Every one is declared in Lua, in <code>~/.config/casper/tools.lua</code>, which
+      <code>make install</code> puts there. Editing it changes the tools on the next call — no
+      rebuild. It used to be compiled into the binary, which meant reading what the thirteen
+      actually do, or changing one, was a build.</p>
+
+      <h2 id="extend">Adding your own</h2>
+      <p>A file in a directory. Nothing to register, no entry point to edit:</p>
+      <pre>~/.config/casper/plugin/yours.lua              <span class="c">alphabetical, each on its own</span>
+~/.local/share/casper/site/pack/*/start/*/plugin/*.lua   <span class="c">installed packages</span>
+~/.config/casper/after/plugin/yours.lua        <span class="c">the last word</span></pre>
+      <p>The registry replaces by name, so the order <i>is</i> the precedence: a file declaring
+      <code>cat</code> means it, and <code>after/plugin/</code> is how you override something you
+      did not write. <code>make install</code> overwrites <code>tools.lua</code> and never touches
+      these. See <a href="../guides/tools.html">writing a tool</a>.</p>
+${note("<b>A package you fetched does not run until you say so.</b> Files you put in your own <code>plugin/</code> directory run on sight. Anything under <code>site/pack/</code> is held back until <code>casper acknowledge</code> records its digest, and held back again the moment it changes.")}
+
+      <h2 id="settings">What a coordinator may tell it</h2>
+${table(["setting", "does"], [
+  ["<code>tools</code>", "per tool, by name. <code>off</code> removes it entirely — not listed, and refused if the model guesses the name anyway. <code>hidden</code> keeps it runnable and takes it out of what the model is shown."],
+  ["<code>load</code>", "an extra declarations file, read after everything on disk"],
+  ["<code>output_bytes</code>", "how much of a result crosses back before it is cut. Head and tail both kept, and the note says how much went."],
+])}
+      <pre><span class="c">-- in magi's config, in casper's vocabulary</span>
+magi.casper = { tools = { dino = { off = true } }, output_bytes = 65536 }</pre>
 
       <h2 id="exec">Why a spawn and not a socket</h2>
       <p>casper's job is running programs, and <b>a socket that runs commands is a remote shell
@@ -408,7 +429,11 @@ ${table(["tools", "for"], [
       <pre>casper tools                 <span class="c">every tool it offers, as declarations a harness can register</span>
 casper run &lt;tool&gt;            <span class="c">run one; the call arrives as JSON on stdin</span>
 casper surface &lt;tool&gt;        <span class="c">hold rows on the harness's screen and draw into them</span>
-casper verbs                 <span class="c">what its socket answers</span>
+casper verbs                 <span class="c">what it answers, on each of its doors</span>
+casper needs                 <span class="c">what a coordinator may tell it</span>
+casper configure             <span class="c">take that configuration, as Lua on stdin</span>
+casper acknowledge           <span class="c">clear the installed packages, so their declarations may run</span>
+casper client                <span class="c">a refusal: casper is reached by spawning it with a call</span>
 
 casper tools --cbor          <span class="c">the same reply, as bytes</span></pre>
 
@@ -575,16 +600,15 @@ PAGES.push({
   title: "Configuration",
   blurb:
     "Lua, and a program rather than a data file: it may probe the machine, loop and branch. " +
-    "Nothing is discovered by scanning — a file the entry point does not name does not load.",
+    "One entry point for what you name, and three directories for what you install.",
   body: `
 ${plate("d-config", "plate 11", "load order, and where a project file is refused")}
 
       <h2 id="entry">The entry point</h2>
-      <pre><span class="c">-- ~/.config/magi/init.lua — the only entry point.</span>
-<span class="c">-- Nothing is discovered by scanning: a file not named here does not load.</span>
+      <pre><span class="c">-- ~/.config/magi/init.lua — what you name explicitly.</span>
+<span class="c">-- What you *install* is discovered: see writing a tool.</span>
 magi.load("clients/hexe.lua")
 magi.load("clients/oslo.lua")
-magi.load("clients/balthasar.lua")
 magi.load("tools.lua")
 
 magi.model   = "openrouter/anthropic/claude-sonnet-4.6"
@@ -601,7 +625,7 @@ ${table(["setting", "does"], [
   ["<code>magi.project</code>", "what this session is called, in the name other sessions see"],
   ["<code>magi.agent_talk</code>", "how far one session may reach another"],
   ["<code>magi.ui</code>", "every colour, glyph and measurement the screen draws with"],
-  ["<code>magi.melchior</code> · <code>magi.balthasar</code>", "settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two"],
+  ["<code>magi.casper</code> · <code>magi.melchior</code> · <code>magi.balthasar</code>", "settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two"],
 ])}
 
       <h2 id="trust">A project's own file</h2>
@@ -624,9 +648,16 @@ ${note("<b>What magi does not keep, it says so about.</b> A declaration for some
       anything the far side would not accept — a coordinator and a sibling disagreeing about what
       a name means is worth a line on stderr.</p>
       <pre>magi.balthasar = { promote_floor = 0.6 }
-magi.melchior  = { max_tokens = 8192 }</pre>
+magi.melchior  = { max_tokens = 8192 }
+magi.casper    = { tools = { dino = { off = true }, birdy = { hidden = true } } }</pre>
       <pre>$ balthasar needs      <span class="c"># what it will accept, in its own words</span>
-$ melchior needs</pre>
+$ melchior needs
+$ casper needs</pre>
+      <p>A setting the far side does not recognise comes back <b>named</b> rather than as a
+      generic refusal, because "refused" is not something a coordinator can act on. Its own
+      vocabulary, not magi's: renaming a setting on one side shows up as a line on stderr instead
+      of failing silently on the other.</p>
+${note("<b>A program spawned per call is told on every spawn.</b> <code>configure</code> sets something in the process that answers it — the whole of what a sibling needs when it is asked once and then runs for the session. casper is one process per call, so what magi decided rides on <i>every</i> spawn instead. Otherwise casper would report the setting taken and the next call would be a fresh process that had never heard of it.")}
 `,
 });
 
@@ -970,12 +1001,26 @@ ${note("<b>An encoding is not a transport.</b> JSON is on all three; naming it a
       did. Two ends disagreeing about that fail <i>silently</i>: a client that unpacks reads a
       bare-value server as having returned nothing at all, so the bug presents as an empty memory
       rather than as an error.</p>
+      <p><b>It is the rows, and <code>n</code> is how many.</b> A verb that lists things puts each
+      thing in <code>result</code> as its own value; it does not put the whole listing in as one
+      value that is a list. <code>"result": [[…]]</code> with <code>"n": 1</code> is the mistake,
+      and it is invisible from one side — one sibling sent every listing it had that way while the
+      other three sent theirs flat, and the coordinator reading them row by row found an array
+      where a declaration belonged and concluded it declared nothing at all.</p>
 
-      <h2 id="version">The version rule</h2>
+      <h2 id="version">Two version rules</h2>
       <p><code>family</code> is the revision of the wire a reply is written in. <b>A newer peer is
       refused by name; an older one is not.</b> A reply with no <code>family</code> at all is from
       before the check and is accepted.</p>
-      <p>The constant is duplicated in each sibling rather than shared. A crate held in common
+      <p><code>verbs</code> also carries <code>surface</code> — the revision of what a
+      <i>third party</i> writes against. Two numbers, because they move for different reasons:</p>
+${table(["", "versions", "read by"], [
+  ["<code>family</code>", "the wire between these programs — the reply shape, the encodings, which verbs exist", "a sibling, or anything speaking to one"],
+  ["<code>surface</code>", "the registrar names, the fields each declaration owes, what a callback is handed", "somebody's extension"],
+])}
+      <p>Both go up only when something already published stops working. Adding a registrar, a
+      field, an event or a verb moves neither.</p>
+      <p>The constants are duplicated in each sibling rather than shared. A crate held in common
       would be a dependency between repositories, and this family has none.</p>
 
       <h2 id="encodings">Two encodings</h2>
@@ -1049,16 +1094,30 @@ ${table(["command", "does"], [
   ["<code>tools</code>", "every tool it offers, as declarations a harness can register"],
   ["<code>run &lt;tool&gt;</code>", "one call, arriving as JSON on stdin"],
   ["<code>surface &lt;tool&gt;</code>", "hold rows on the harness's screen and exchange frames"],
-  ["<code>verbs</code>", "what its socket answers"],
+  ["<code>verbs</code>", "what it answers, on each of its doors"],
 ])}
 ${note("<b><code>run</code> is deliberately not reachable over the socket.</b> casper's job is running programs, and a socket that runs commands is a remote shell wearing a friendly name. The spawn link carries the trust instead.")}
 
-      <h2 id="both">Everywhere</h2>
+      <h2 id="both">Everywhere — the floor</h2>
+      <p>Every program in the family answers these, in the reply shape, on its command line. A
+      family where one program can be asked what it speaks and another cannot has stopped being
+      one. <code>gate-family.sh</code> holds each of them to it on the merge path.</p>
 ${table(["", ""], [
-  ["<code>needs</code>", "what a coordinator may tell this program, in its own vocabulary"],
-  ["<code>configure</code>", "take that configuration, as Lua on stdin, and say what it did with it"],
+  ["<code>verbs</code>", "what this program answers, and on which door. Everything it lists, it dispatches — that is one of the two rules that is tested rather than reviewed."],
+  ["<code>client</code>", "the Lua client library for its surface, as source. A program whose surface is not reached from a VM still answers, saying so — silence is not parseable."],
+  ["<code>acknowledge</code>", "clear the installed packages, so their declarations may run"],
   ["<code>--json</code> · <code>--cbor</code>", "which encoding the reply comes back in"],
 ])}
+
+      <h2 id="coordinated">Coordinated — everything magi drives</h2>
+${table(["", ""], [
+  ["<code>needs</code>", "what a coordinator may tell this program, in its own vocabulary"],
+  ["<code>configure</code>", "take that configuration, as Lua on stdin, and say what it did with each name"],
+])}
+      <p>magi answers neither: it coordinates rather than being coordinated, and there is nothing
+      above it to hand it settings. A setting the far side does not recognise comes back
+      <b>named</b> — "refused" without a name is not something a coordinator can act on.</p>
+${note("<b>A setting a program declares must change something.</b> A <code>needs</code> entry that nothing reads is the same sin as a verb that is advertised and refused, one level down: a coordinator sets it, is told it was taken, and the behaviour never moves.")}
 `,
 });
 
@@ -1077,6 +1136,8 @@ PAGES.push({
       --sessions &lt;DIR&gt;        <span class="c">where session journals live</span>
 
 magi doctor                   <span class="c">what a session here would be made of, without starting one</span>
+magi verbs                    <span class="c">what it answers, on each of its doors</span>
+magi acknowledge              <span class="c">clear the installed packages, so they may run</span>
 magi tools                    <span class="c">every tool the model can call, and how each is reached</span>
 magi models                   <span class="c">the providers and models melchior knows about</span>
 magi lua-api                  <span class="c">the Lua client library for magi's own surface</span>
@@ -1087,7 +1148,10 @@ magi fake-host                <span class="c">serve a recorded session, so the U
       <pre>casper tools                  <span class="c">every tool, with schemas</span>
 casper run &lt;tool&gt;             <span class="c">one call on stdin, one result on stdout</span>
 casper surface &lt;tool&gt;         <span class="c">frames both ways, for as long as it holds its rows</span>
-casper verbs                  <span class="c">what its socket answers</span>
+casper verbs                  <span class="c">what it answers, on each of its doors</span>
+casper needs                  <span class="c">what a coordinator may tell it</span>
+casper configure              <span class="c">take that configuration, as Lua on stdin</span>
+casper acknowledge            <span class="c">clear the installed packages, so their declarations may run</span>
   --json | --cbor             <span class="c">which encoding a reply comes back in</span></pre>
 
       <h2 id="melchior">melchior</h2>
@@ -1098,6 +1162,8 @@ melchior serve                <span class="c">bind this session's socket and ans
 melchior needs                <span class="c">what a coordinator may tell it</span>
 melchior configure            <span class="c">take that configuration, as Lua on stdin</span>
 melchior tool                 <span class="c">the agent surface, as a harness calls it</span>
+melchior verbs                <span class="c">what it answers, on each of its doors</span>
+melchior acknowledge          <span class="c">clear the installed packages, so their declarations may run</span>
   --json | --cbor             <span class="c">which encoding a reply comes back in</span></pre>
 
       <h2 id="balthasar">balthasar</h2>
@@ -1176,6 +1242,7 @@ ${table(["", ""], [
   ['<a href="modularity.html">what a module is</a>', "units, edges, and what refuses a violation at each of the three"],
   ['<a href="permissions.html">three bets on safety</a>', "permission models, and what auditing ours found"],
   ['<a href="providers.html">where vendor knowledge lives</a>', "one question, and a tenfold difference in what the answer costs"],
+  ['<a href="extending.html">extending it</a>', "the question a module graph does not answer: how does somebody who is not the author change what this does?"],
 ])}
 `,
 });
@@ -1296,6 +1363,84 @@ ${table(["", "to test one unit, this compiles"], [
 `,
 });
 
+
+PAGES.push({
+  at: "compared/extending.html",
+  section: "cmp",
+  nav: "extending it",
+  title: "Extending it",
+  blurb:
+    "The question a module graph does not answer: how does somebody who is not the author change " +
+    "what this does? Three systems, three units of extension.",
+  body: `
+      <h2 id="unit">Three units</h2>
+${table(["", "the unit", "machinery", "shipped content"], [
+  ["<b>pi</b>", "a JavaScript file", "~160,000 lines — an embedded engine, a Node compatibility layer, a capability policy, a package manager", "107 embedded modules, ~78 example extensions"],
+  ["<b>deepseek</b>", "a Rust crate", "~800 lines. Its plugin port has exactly one implementor, named <code>UnavailablePluginRuntime</code>", "none"],
+  ["<b>nerv</b>", "a <b>Lua declaration</b>", "four VMs, one sandbox each — a removal list, not a permission model", "~9,000 lines of Lua, examples in every repository"],
+])}
+      <p>deepseek documents a plugin seam and ships the “unavailable” answer for it. That is
+      honest, and it is the whole story. pi is thirteen times our size and is the only one of the
+      three that has actually been extended by strangers — which is the fact worth taking
+      seriously, and the reason for everything below.</p>
+
+      <h2 id="reach">What a third party can reach</h2>
+${table(["", "and how"], [
+  ["a tool", "<code>magi.tool</code>, or <code>casper.tool</code> for one that runs a program"],
+  ["a watcher", "<code>magi.watch</code> — eight events, told after the fact, answering nothing"],
+  ["a wire protocol", "<code>melchior.api</code>. The registry is readable, so a dialect that differs from a shipped one in one function borrows the other three"],
+  ["a provider", "<code>melchior.provider</code> — an endpoint, a credential, and either a model list or <code>discover = true</code>"],
+  ["a memory source", "<code>balthasar.source</code>. No Rust file in balthasar names a harness; a new one is a file, not a release"],
+  ["what a model is told", "<code>balthasar.section</code> — weight, order, filter, and a confidence floor"],
+])}
+
+      <h2 id="where">Where it goes</h2>
+      <p>neovim's runtimepath, unchanged, in all four. Twenty years of real plugins have been
+      written against it and most people arriving already know it; deviating buys nothing and
+      costs everyone the transfer.</p>
+      <pre>~/.config/&lt;program&gt;/plugin/*.lua                        <span class="c">alphabetical, each on its own</span>
+~/.local/share/&lt;program&gt;/site/pack/*/start/*/plugin/*.lua  <span class="c">installed packages</span>
+~/.config/&lt;program&gt;/after/plugin/*.lua                  <span class="c">the last word</span></pre>
+      <p>Every registrar replaces by name, so the order <i>is</i> the precedence. No manifest, no
+      registration, no entry point to edit — requiring an edit to your own <code>init.lua</code> to
+      enable somebody's package makes every package a merge conflict with your configuration.</p>
+
+      <h2 id="contain">What contains it</h2>
+      <p>pi gives its extensions a default grant of read, write, http, events and session, and
+      never asks. It has a capability policy because it embedded a language that can do anything;
+      the policy exists to take that back.</p>
+      <p>nerv never handed it over. The sandbox is a removal list — <code>os.execute</code>,
+      <code>io.popen</code>, <code>io</code> entirely, <code>require</code>, <code>dofile</code>,
+      <code>loadfile</code> — applied to the VM before any file runs. What is left cannot spawn or
+      touch a file. Running a command goes through the same ledger the shell tool passes; writing
+      one goes through the same gate the write tool passes. <b>A discovered file is held to exactly
+      what a named one is.</b></p>
+${note("<b>The inversion that made this urgent is closed.</b> For a while the one program loading third-party packages was the one VM still keeping <code>os.execute</code>. The removal list applies in all four now, and discovery arrived after it rather than before.")}
+
+      <h2 id="trust">What a package costs to trust</h2>
+      <p>pi's package manager is 8,579 lines: npm and git sources, user and project scopes, a
+      lockfile with digests and trust states. Most of that is a package ecosystem nobody here
+      wants to be in. The ten per cent worth having is the part about <i>trust</i> rather than
+      fetching, and it is what pi conspicuously does for MCP servers and not for its own
+      extensions.</p>
+${table(["", ""], [
+  ["a file you wrote", "runs on sight. A prompt about your own configuration is one nobody reads — it trains people to say yes."],
+  ["a package you fetched", "held back until <code>&lt;program&gt; acknowledge</code> records its SHA-256, and held back again the moment it changes"],
+])}
+      <p>Fetching is <code>git clone</code>. The lockfile is the idea. A manifest that will not
+      parse reads as empty, which holds everything back rather than letting everything through.</p>
+
+      <h2 id="stable">What is promised</h2>
+      <p><code>&lt;program&gt; verbs</code> reports <code>surface</code>, separate from
+      <code>family</code>: one versions the wire between these programs, the other versions what an
+      extension is written against. Both move only when something already published stops working.</p>
+      <p>Five registrars were published, dead and unversioned for most of this project's life. A
+      number an extension can read is what closes that window deliberately rather than by
+      accident — and the examples in every repository are run by that repository's own test suite,
+      because an example that does not load is worse than no example.</p>
+${note("<b>Still ahead of us.</b> pi's ~78 example extensions are not documentation; they are how it knows the surface works, and ours has been used by nobody who did not write it. That is the measurement this section cannot yet make.")}
+`,
+});
 PAGES.push({
   at: "compared/permissions.html",
   section: "cmp",

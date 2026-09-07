@@ -65,12 +65,29 @@
       did. Two ends disagreeing about that fail <i>silently</i>: a client that unpacks reads a
       bare-value server as having returned nothing at all, so the bug presents as an empty memory
       rather than as an error.</p>
+      <p><b>It is the rows, and <code>n</code> is how many.</b> A verb that lists things puts each
+      thing in <code>result</code> as its own value; it does not put the whole listing in as one
+      value that is a list. <code>"result": [[…]]</code> with <code>"n": 1</code> is the mistake,
+      and it is invisible from one side — one sibling sent every listing it had that way while the
+      other three sent theirs flat, and the coordinator reading them row by row found an array
+      where a declaration belonged and concluded it declared nothing at all.</p>
 
-      <h2 id="version">The version rule</h2>
+      <h2 id="version">Two version rules</h2>
       <p><code>family</code> is the revision of the wire a reply is written in. <b>A newer peer is
       refused by name; an older one is not.</b> A reply with no <code>family</code> at all is from
       before the check and is accepted.</p>
-      <p>The constant is duplicated in each sibling rather than shared. A crate held in common
+      <p><code>verbs</code> also carries <code>surface</code> — the revision of what a
+      <i>third party</i> writes against. Two numbers, because they move for different reasons:</p>
+      <div class="tw"><table>
+        <thead><tr><th></th><th>versions</th><th>read by</th></tr></thead>
+        <tbody>
+          <tr><td><code>family</code></td><td class="wrap-ok">the wire between these programs — the reply shape, the encodings, which verbs exist</td><td class="wrap-ok">a sibling, or anything speaking to one</td></tr>
+          <tr><td><code>surface</code></td><td class="wrap-ok">the registrar names, the fields each declaration owes, what a callback is handed</td><td class="wrap-ok">somebody's extension</td></tr>
+        </tbody>
+      </table></div>
+      <p>Both go up only when something already published stops working. Adding a registrar, a
+      field, an event or a verb moves neither.</p>
+      <p>The constants are duplicated in each sibling rather than shared. A crate held in common
       would be a dependency between repositories, and this family has none.</p>
 
       <h2 id="encodings">Two encodings</h2>

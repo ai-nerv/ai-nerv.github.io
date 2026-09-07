@@ -83,20 +83,37 @@
           <tr><td><code>tools</code></td><td class="wrap-ok">every tool it offers, as declarations a harness can register</td></tr>
           <tr><td><code>run &lt;tool&gt;</code></td><td class="wrap-ok">one call, arriving as JSON on stdin</td></tr>
           <tr><td><code>surface &lt;tool&gt;</code></td><td class="wrap-ok">hold rows on the harness's screen and exchange frames</td></tr>
-          <tr><td><code>verbs</code></td><td class="wrap-ok">what its socket answers</td></tr>
+          <tr><td><code>verbs</code></td><td class="wrap-ok">what it answers, on each of its doors</td></tr>
         </tbody>
       </table></div>
       <div class="note"><b><code>run</code> is deliberately not reachable over the socket.</b> casper's job is running programs, and a socket that runs commands is a remote shell wearing a friendly name. The spawn link carries the trust instead.</div>
 
-      <h2 id="both">Everywhere</h2>
+      <h2 id="both">Everywhere — the floor</h2>
+      <p>Every program in the family answers these, in the reply shape, on its command line. A
+      family where one program can be asked what it speaks and another cannot has stopped being
+      one. <code>gate-family.sh</code> holds each of them to it on the merge path.</p>
+      <div class="tw"><table>
+        <thead><tr><th></th><th></th></tr></thead>
+        <tbody>
+          <tr><td><code>verbs</code></td><td class="wrap-ok">what this program answers, and on which door. Everything it lists, it dispatches — that is one of the two rules that is tested rather than reviewed.</td></tr>
+          <tr><td><code>client</code></td><td class="wrap-ok">the Lua client library for its surface, as source. A program whose surface is not reached from a VM still answers, saying so — silence is not parseable.</td></tr>
+          <tr><td><code>acknowledge</code></td><td class="wrap-ok">clear the installed packages, so their declarations may run</td></tr>
+          <tr><td><code>--json</code> · <code>--cbor</code></td><td class="wrap-ok">which encoding the reply comes back in</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="coordinated">Coordinated — everything magi drives</h2>
       <div class="tw"><table>
         <thead><tr><th></th><th></th></tr></thead>
         <tbody>
           <tr><td><code>needs</code></td><td class="wrap-ok">what a coordinator may tell this program, in its own vocabulary</td></tr>
-          <tr><td><code>configure</code></td><td class="wrap-ok">take that configuration, as Lua on stdin, and say what it did with it</td></tr>
-          <tr><td><code>--json</code> · <code>--cbor</code></td><td class="wrap-ok">which encoding the reply comes back in</td></tr>
+          <tr><td><code>configure</code></td><td class="wrap-ok">take that configuration, as Lua on stdin, and say what it did with each name</td></tr>
         </tbody>
       </table></div>
+      <p>magi answers neither: it coordinates rather than being coordinated, and there is nothing
+      above it to hand it settings. A setting the far side does not recognise comes back
+      <b>named</b> — "refused" without a name is not something a coordinator can act on.</p>
+      <div class="note"><b>A setting a program declares must change something.</b> A <code>needs</code> entry that nothing reads is the same sin as a verb that is advertised and refused, one level down: a coordinator sets it, is told it was taken, and the behaviour never moves.</div>
 
       <div class="next"><a href="wire.html"><span class="lbl">back</span>the wire</a><a href="cli.html"><span class="lbl">next</span>commands</a></div>
     </main>

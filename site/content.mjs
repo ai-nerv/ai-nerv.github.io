@@ -636,37 +636,47 @@ PAGES.push({
   nav: "writing a tool",
   title: "Writing a tool",
   blurb:
-    "A declaration — a name, a description, a parameter schema, and how to reach it. Written in " +
-    "Lua and read at start-up; none of it is compiled in.",
+    "Drop a Lua file in a directory and it is in the next session. A declaration — a name, a " +
+    "description, a parameter schema, and how the body is reached.",
   body: `
 ${plate("d-tools", "plate 04", "three sources, one registry, four ways to reach a tool")}
 
-      <h2 id="four">Four fields</h2>
+      <h2 id="where">Where the file goes</h2>
+      <p>No entry point to edit, no manifest, no registration. Make the directory if it is not
+      there:</p>
+      <pre>~/.config/magi/plugin/yours.lua                        <span class="c">-- alphabetical, each on its own</span>
+~/.local/share/magi/site/pack/*/start/*/plugin/*.lua   <span class="c">-- installed packages</span>
+~/.config/magi/after/plugin/yours.lua                  <span class="c">-- the last word</span></pre>
+      <p>The same three directories exist for <code>casper</code>, <code>melchior</code> and
+      <code>balthasar</code>, holding their own registrars. Every registrar replaces by name, so
+      the order <i>is</i> the precedence: <code>after/plugin/</code> is how you override something
+      you did not write. Naming a file explicitly still works and is still the auditable case —
+      <code>magi.load</code>, casper's <code>load</code> setting.</p>
+${note("<b>A package you fetched does not run until you say so.</b> Files in your own <code>plugin/</code> directory are yours and run on sight; anything under <code>site/pack/</code> is held back until <code>magi acknowledge</code> records its digest, and held back again the moment it changes. Fetching is <code>git clone</code>; the idea is the lockfile.")}
+
+      <h2 id="four">What a declaration owes</h2>
       <pre>magi.tool("branch", {
-  description = "the git branch this directory is on",
-  needs = { },
-  run = function()
-    local out = magi.exec("git", { "branch", "--show-current" })
-    return {
-      said  = out,                       <span class="c">-- the model reads this. costs context.</span>
-      shown = "on " .. out,              <span class="c">-- the person sees this. costs nothing.</span>
-    }
+  description = "The git branch this directory is on.",
+  parameters  = { type = "object", properties = {} },
+  transport   = { kind = "lua" },        <span class="c">-- the body is the run below, in this VM</span>
+  needs       = "run",                   <span class="c">-- read | write | run | reach</span>
+  run = function(args)
+    local out, err = magi.shell("git branch --show-current")
+    if out == nil then return { content = err, is_error = true } end
+    return { content = out }
   end,
 })</pre>
 ${table(["field", "is"], [
   ["<code>description</code>", "what the model is told the tool does. This is the whole of how it decides to call it."],
-  ["<code>needs</code>", "the parameter schema, as the model is shown it. Empty means it takes none."],
-  ["<code>run</code>", "what happens. Returns <code>said</code> and <code>shown</code>."],
-  ["<code>transport</code>", "how it is reached, when it is not this Lua body — see below."],
+  ["<code>parameters</code>", "JSON Schema for the arguments. The model is held to it before <code>run</code> is called."],
+  ["<code>transport</code>", "how the body is reached. Not optional and no default — see below."],
+  ["<code>needs</code>", "the permission verb this acts under. Omit it for a tool that touches nothing a person would want a say over."],
+  ["<code>run</code>", "the body, for a <code>lua</code> transport. Returns <code>{ content = … }</code>, or <code>{ content = …, is_error = true }</code>."],
 ])}
-
-      <h2 id="split">said and shown</h2>
-      <p>The split is the whole idea. <code>said</code> enters the transcript, is replayed on every
-      subsequent request, and costs context every turn until the conversation is compacted.
-      <code>shown</code> is drawn once and costs nothing.</p>
-      <p>A tool that returns a hundred lines of diff as <code>said</code> has spent that budget for
-      the rest of the session. The same diff as <code>shown</code>, with
-      <code>said = "patched 3 files"</code>, costs four words.</p>
+      <p>There is no <code>os.execute</code> and no <code>io.popen</code> in the VM, and no
+      <code>io</code> at all. <code>magi.shell</code> is the seam commands go through — the same
+      ledger the shell tool passes, the same refusals — and <code>magi.fs.write</code> is the one
+      for files. Both answer <code>nil, why</code> rather than raising.</p>
 
       <h2 id="transports">Four ways to be reached</h2>
 ${table(["transport", "is", "for"], [
@@ -676,7 +686,31 @@ ${table(["transport", "is", "for"], [
   ["<code>builtin</code>", "compiled into magi", "the floor: <code>read</code>, <code>write</code>, <code>edit</code>"],
 ])}
       <p>The registry does not care which. One name, one entry, and the model sees the same
-      declaration whichever way it is reached.</p>
+      declaration whichever way it is reached. A tool with a <code>run</code> and no transport is
+      refused at load — the registry has no way to guess that the function is the point.</p>
+
+      <h2 id="split">said and shown</h2>
+      <p>A <b>casper</b> tool returns <code>said</code> and <code>shown</code> rather than
+      <code>content</code>, and the split is the whole idea. <code>said</code> enters the
+      transcript, is replayed on every subsequent request, and costs context every turn until the
+      conversation is compacted. <code>shown</code> is drawn once and costs nothing.</p>
+      <pre>casper.tool("patch", {
+  description = "Show the difference between two files.",
+  parameters  = { type = "object", properties = { old = { type = "string" } } },
+  needs = "read",
+  run = function(args)
+    local done = casper.exec("diff", { "-u", args.old, args.new })
+    return {
+      said  = "3 files differ",                        <span class="c">-- the model reads this</span>
+      shown = casper.paint.ansi(done.out, casper.theme), <span class="c">-- the person sees this</span>
+    }
+  end,
+})</pre>
+      <p>A tool that returns a hundred lines of diff as <code>said</code> has spent that budget for
+      the rest of the session. The same diff as <code>shown</code>, with
+      <code>said = "patched 3 files"</code>, costs four words. And a tool never names a colour: it
+      says what its output <i>means</i> — <code>added</code>, <code>keyword</code>,
+      <code>path</code> — and the harness resolves that against its own palette.</p>
 
       <h2 id="caps">Two caps you do not opt out of</h2>
       <ul class="plain">
@@ -689,11 +723,32 @@ ${table(["transport", "is", "for"], [
       </ul>
 ${note("<b>Here rather than in the tools</b>, because a peer is another program and cannot be trusted to cap itself, a Lua tool has no way to write a spill file, and a shipped declaration has no knob to set. Every result of every transport passes through one place, which is the only place that is true of.")}
 
+      <h2 id="watch">Watching a session</h2>
+      <p>The other registrar. A watcher is told after the fact and answers with nothing: it cannot
+      change a result and cannot fail one, so observing a session is not a way to break it.</p>
+      <pre>magi.watch("timing", {
+  run = function(event)
+    if event.kind ~= "turn.ended" then return end
+    magi.fs.write(os.getenv("HOME") .. "/.local/state/magi/last", event.took_ms .. "ms\\n")
+  end,
+})</pre>
+      <p>Branch on <code>event.kind</code> and nothing else. There are eight:
+      <code>session.opened</code>, <code>turn.began</code>, <code>turn.ended</code>,
+      <code>tool.finished</code>, <code>permission.asked</code>,
+      <code>permission.answered</code>, <code>context.compacted</code> and
+      <code>provider.retried</code>.</p>
+
       <h2 id="asking">A tool that asks a question</h2>
       <p>A declaration reads <code>args.answered</code> to know it is resuming. The answer travels
       <i>with</i> the arguments rather than beside them — merged, so a declaration writes
       <code>args.answered</code> and not <code>args.call.answered</code>. The answer is one more
       thing known about this call, which is what an argument is.</p>
+
+      <h2 id="stable">What is stable</h2>
+      <p><code>magi verbs</code> reports <code>surface</code>, which versions everything on this
+      page. It is <b>1</b>. Adding a registrar, a field or an event does not move it — a file
+      written against 1 keeps running. Renaming one, removing one, or changing what a field means
+      does.</p>
 `,
 });
 

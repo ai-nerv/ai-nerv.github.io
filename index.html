@@ -46,8 +46,8 @@
       <div class="cards">
         <div class="card">
           <h4>magi</h4><div class="role">the harness</div>
-          <p>The one you run. Holds the conversation, the screen, the journal and the permission
-          ledger, and reaches the other three for everything else.</p>
+          <p>The one you run. Holds the conversation, the screen, the tool registry and the
+          permission ledger, and reaches the other three for everything else.</p>
           <a href="programs/magi.html">what it owns →</a>
         </div>
         <div class="card">
@@ -85,6 +85,7 @@
           <tr><td><a href="guides/install.html">install</a></td><td class="wrap-ok">get the binaries, and check what a session here would be made of</td></tr>
           <tr><td><a href="architecture/index.html">the map</a></td><td class="wrap-ok">every edge, what travels on it, and what happens when one end is missing</td></tr>
           <tr><td><a href="guides/tools.html">write a tool</a></td><td class="wrap-ok">four fields of Lua, read at start-up — nothing is compiled in</td></tr>
+          <tr><td><a href="guides/roles.html">swap a program</a></td><td class="wrap-ok">any of the three siblings, replaced by anything that answers the same core verbs</td></tr>
           <tr><td><a href="reference/wire.html">the wire</a></td><td class="wrap-ok">the shapes, the encodings, and the framing, in enough detail to write a peer</td></tr>
         </tbody>
       </table></div>
@@ -94,9 +95,12 @@
         <li><b>No shared code, in either direction.</b> balthasar's Rust never parses magi's types
         and melchior does not know what a harness is. What crosses is data each side parses into
         its own shapes — so any one of them can be replaced by something that speaks the same
-        words.</li>
-        <li><b>Every sibling is optional.</b> magi with nothing else installed is a session with
-        three builtin tools, no model and no memory — which runs, and says so.</li>
+        words. That is written down as a contract: see <a href="guides/roles.html">swapping a
+        program</a>.</li>
+        <li><b>Every sibling but the memory layer is optional.</b> Without casper a session has
+        three builtin tools; without melchior it has no model and no other agents, and runs and
+        says so. Without a memory layer it does not start: that layer is the store, and a session
+        that cannot record is refused rather than run on a copy that goes stale.</li>
         <li><b>Linux only, and that is a decision.</b> Peer identity comes from
         <code>SO_PEERCRED</code>, which means there is no handshake token to design, issue or
         leak.</li>

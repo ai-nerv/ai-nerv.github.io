@@ -36,6 +36,7 @@
     <ul>
       <li><a href="install.html">install</a></li>
       <li><a href="configure.html" aria-current="page">configuration</a></li>
+      <li><a href="roles.html">swapping a program</a></li>
       <li><a href="tools.html">writing a tool</a></li>
       <li><a href="permissions.html">what may run</a></li>
       <li><a href="memory.html">memory</a></li>
@@ -55,8 +56,6 @@
       <h2 id="entry">The entry point</h2>
       <pre><span class="c">-- ~/.config/magi/init.lua — what you name explicitly.</span>
 <span class="c">-- What you *install* is discovered: see writing a tool.</span>
-magi.load("clients/hexe.lua")
-magi.load("clients/oslo.lua")
 magi.load("tools.lua")
 
 magi.model   = "openrouter/anthropic/claude-sonnet-4.6"
@@ -68,6 +67,7 @@ magi.allow   = { … }                    <span class="c">-- answered in advance
         <thead><tr><th>setting</th><th>does</th></tr></thead>
         <tbody>
           <tr><td><code>magi.model</code></td><td class="wrap-ok">which model, as <code>magi models</code> prints it</td></tr>
+          <tr><td><code>magi.memory</code> · <code>magi.tools</code> · <code>magi.melchior</code></td><td class="wrap-ok">as a string, which program fills that role — see <a href="roles.html">swapping a program</a></td></tr>
           <tr><td><code>magi.confine</code></td><td class="wrap-ok">whether <code>read</code>, <code>write</code> and <code>edit</code> refuse paths outside the session's directory</td></tr>
           <tr><td><code>magi.allow</code></td><td class="wrap-ok">permissions granted in advance, so they are not asked about</td></tr>
           <tr><td><code>magi.trusted</code></td><td class="wrap-ok">directories whose <code>.magi.lua</code> is as good as this file</td></tr>
@@ -75,7 +75,7 @@ magi.allow   = { … }                    <span class="c">-- answered in advance
           <tr><td><code>magi.project</code></td><td class="wrap-ok">what this session is called, in the name other sessions see</td></tr>
           <tr><td><code>magi.agent_talk</code></td><td class="wrap-ok">how far one session may reach another</td></tr>
           <tr><td><code>magi.ui</code></td><td class="wrap-ok">every colour, glyph and measurement the screen draws with</td></tr>
-          <tr><td><code>magi.casper</code> · <code>magi.melchior</code> · <code>magi.balthasar</code></td><td class="wrap-ok">settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two</td></tr>
+          <tr><td><code>magi.casper</code> · <code>magi.melchior</code> · <code>magi.balthasar</code></td><td class="wrap-ok">as a table, settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two. For the tools role the table is named after whichever program fills it.</td></tr>
         </tbody>
       </table></div>
 
@@ -89,6 +89,7 @@ magi.allow   = { … }                    <span class="c">-- answered in advance
           <tr><td>choose a model the machine already offers</td><td class="wrap-ok">declare a tool</td></tr>
           <tr><td>set ordinary settings</td><td class="wrap-ok">touch <code>confine</code>, <code>allow</code> or <code>trusted</code> — fatal, not a warning</td></tr>
           <tr><td>load its own files</td><td class="wrap-ok">name its own directory as trusted</td></tr>
+          <tr><td>tune a sibling through its settings table</td><td class="wrap-ok">name the program that fills a role — fatal, since it would run with the session’s authority</td></tr>
         </tbody>
       </table></div>
       <p>The one way past it is from your own configuration: naming a directory in
@@ -113,7 +114,7 @@ $ casper needs</pre>
       of failing silently on the other.</p>
       <div class="note"><b>A program spawned per call is told on every spawn.</b> <code>configure</code> sets something in the process that answers it — the whole of what a sibling needs when it is asked once and then runs for the session. casper is one process per call, so what magi decided rides on <i>every</i> spawn instead. Otherwise casper would report the setting taken and the next call would be a fresh process that had never heard of it.</div>
 
-      <div class="next"><a href="install.html"><span class="lbl">back</span>install</a><a href="tools.html"><span class="lbl">next</span>writing a tool</a></div>
+      <div class="next"><a href="install.html"><span class="lbl">back</span>install</a><a href="roles.html"><span class="lbl">next</span>swapping a program</a></div>
     </main>
   </div>
   <footer class="foot">

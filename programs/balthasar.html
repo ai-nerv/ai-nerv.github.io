@@ -69,13 +69,14 @@ balthasar sessions                <span class="c">which runs this project has ha
 balthasar serve                   <span class="c">listen for other programs</span></pre>
 
       <h2 id="store">Where a store lives</h2>
-      <pre>&lt;project&gt;/balthasar/&lt;tool&gt;/project.db              <span class="c">what is true here, kept</span>
-&lt;project&gt;/balthasar/&lt;tool&gt;/&lt;session&gt;/memory.db     <span class="c">that run's scratch, dies with it</span>
-&lt;project&gt;/balthasar/&lt;tool&gt;/&lt;session&gt;/transcript.db
+      <pre>&lt;project&gt;/balthasar/&lt;tool&gt;/project.db                   <span class="c">what is true here, kept</span>
+&lt;project&gt;/balthasar/&lt;tool&gt;/&lt;run&gt;/transcript.db            <span class="c">that run's turns, verbatim</span>
+&lt;project&gt;/balthasar/&lt;tool&gt;/&lt;run&gt;/&lt;agent&gt;/memory.db        <span class="c">one agent's scratch, dies with the run</span>
 ~/.local/share/balthasar/&lt;tool&gt;/global.db          <span class="c">yours, everywhere</span></pre>
       <p><b>The store lives in the project</b>, so renaming a checkout moves its memory rather than
       orphaning it. Which store a given directory gets is
       <a href="../guides/memory.html#scope">its own question</a>.</p>
+      <div class="note"><b>balthasar fills the <code>memory</code> role.</b> It binds under <code>$XDG_RUNTIME_DIR/memory/</code>, the role’s name, and under the older <code>balthasar/</code> for one release so nothing that has not been rebuilt loses it. <code>magi.memory</code> names another program for the role — see <a href="../guides/roles.html">swapping a program</a>.</div>
 
       <h2 id="shape">The shape of it</h2>
       <div class="unit-head"><h4>balthasar</h4><span class="role">twelve crates</span>

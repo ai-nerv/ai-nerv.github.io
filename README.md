@@ -3,7 +3,7 @@
 The site for [nerv](https://github.com/ai-nerv) — a coding agent for Linux, in four programs that
 share no code.
 
-`docs/` is what is served. It is **generated**: edit `site/content.mjs`, then
+The repository root is what is served. It is **generated**: edit `site/content.mjs`, then
 
 ```sh
 node site/build.mjs

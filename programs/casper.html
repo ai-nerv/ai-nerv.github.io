@@ -91,6 +91,7 @@ magi.casper = { tools = { dino = { off = true } }, output_bytes = 65536 }</pre>
       wearing a friendly name</b>. The spawn link carries the trust instead: a parent that can
       spawn casper could have run the command itself, so nothing is granted by handing it over.
       One exec per call.</p>
+      <div class="note"><b>casper fills the <code>tools</code> role, and is the default rather than the only choice.</b> <code>magi.tools</code> hands the role to any program that answers <code>tools</code> and <code>run</code> — see <a href="../guides/roles.html">swapping a program</a>. The settings table follows the program’s own name, so <code>magi.casper</code> is casper’s because casper is the one filling the role.</div>
 
       <h2 id="cli">At a terminal</h2>
       <pre>casper tools                 <span class="c">every tool it offers, as declarations a harness can register</span>

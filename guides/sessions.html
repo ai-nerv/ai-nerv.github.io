@@ -36,6 +36,7 @@
     <ul>
       <li><a href="install.html">install</a></li>
       <li><a href="configure.html">configuration</a></li>
+      <li><a href="roles.html">swapping a program</a></li>
       <li><a href="tools.html">writing a tool</a></li>
       <li><a href="permissions.html">what may run</a></li>
       <li><a href="memory.html">memory</a></li>
@@ -72,6 +73,30 @@
       </table></div>
       <p>Sessions in different projects never can, at any setting. This only widens things inside
       one project, and nothing widens it further.</p>
+
+      <h2 id="fork">A child of this session</h2>
+      <pre>magi fork "review the parser" --role reviewer --role-description "reads diffs, writes none"</pre>
+      <p>melchior names the child and mints the secret that makes it stoppable; magi starts the
+      process. The child is told which session started it and leaves when that one does. It gets no
+      more than its parent has — a child that wants something outside that is refused and told to
+      ask its parent. A role given at birth is a label others can route by, and it grants
+      nothing.</p>
+
+      <h2 id="crew">The crew</h2>
+      <p>A model reaches the other agents through one tool, whose verbs melchior answers on its
+      <code>tool</code> door:</p>
+      <div class="tw"><table>
+        <thead><tr><th>verbs</th><th>for</th></tr></thead>
+        <tbody>
+          <tr><td><code>list</code> <code>whoami</code> <code>about</code> <code>crew</code></td><td class="wrap-ok">who is here, who started whom, and what each is for</td></tr>
+          <tr><td><code>send</code> <code>ask</code> <code>reply</code> <code>inbox</code></td><td class="wrap-ok">talking — an answer can arrive long after the connection that carried the question has closed</td></tr>
+          <tr><td><code>claim</code> <code>claims</code> <code>release</code></td><td class="wrap-ok">saying what one is working on, so two agents do not both do it</td></tr>
+          <tr><td><code>assign</code> <code>task</code> <code>handoff</code></td><td class="wrap-ok">handing work to another agent, and keeping a handle on it</td></tr>
+          <tr><td><code>stop</code> <code>disband</code></td><td class="wrap-ok">ending a child, or a whole branch of them</td></tr>
+        </tbody>
+      </table></div>
+      <p>Every session publishes its screen beside its socket, so the one terminal you have moves
+      from agent to agent rather than a window being opened per agent.</p>
 
       <h2 id="verbs">What a session may say</h2>
       <p>The vocabulary has <b>no verb that runs anything</b>. It sends messages, reads an inbox,

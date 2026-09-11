@@ -50,8 +50,8 @@ PAGES.push({
       <div class="cards">
         <div class="card">
           <h4>magi</h4><div class="role">the harness</div>
-          <p>The one you run. Holds the conversation, the screen, the journal and the permission
-          ledger, and reaches the other three for everything else.</p>
+          <p>The one you run. Holds the conversation, the screen, the tool registry and the
+          permission ledger, and reaches the other three for everything else.</p>
           <a href="programs/magi.html">what it owns →</a>
         </div>
         <div class="card">
@@ -84,6 +84,7 @@ ${table(["", ""], [
   ['<a href="guides/install.html">install</a>', "get the binaries, and check what a session here would be made of"],
   ['<a href="architecture/index.html">the map</a>', "every edge, what travels on it, and what happens when one end is missing"],
   ['<a href="guides/tools.html">write a tool</a>', "four fields of Lua, read at start-up — nothing is compiled in"],
+  ['<a href="guides/roles.html">swap a program</a>', "any of the three siblings, replaced by anything that answers the same core verbs"],
   ['<a href="reference/wire.html">the wire</a>', "the shapes, the encodings, and the framing, in enough detail to write a peer"],
 ])}
 
@@ -92,9 +93,12 @@ ${table(["", ""], [
         <li><b>No shared code, in either direction.</b> balthasar's Rust never parses magi's types
         and melchior does not know what a harness is. What crosses is data each side parses into
         its own shapes — so any one of them can be replaced by something that speaks the same
-        words.</li>
-        <li><b>Every sibling is optional.</b> magi with nothing else installed is a session with
-        three builtin tools, no model and no memory — which runs, and says so.</li>
+        words. That is written down as a contract: see <a href="guides/roles.html">swapping a
+        program</a>.</li>
+        <li><b>Every sibling but the memory layer is optional.</b> Without casper a session has
+        three builtin tools; without melchior it has no model and no other agents, and runs and
+        says so. Without a memory layer it does not start: that layer is the store, and a session
+        that cannot record is refused rather than run on a copy that goes stale.</li>
         <li><b>Linux only, and that is a decision.</b> Peer identity comes from
         <code>SO_PEERCRED</code>, which means there is no handshake token to design, issue or
         leak.</li>
@@ -122,10 +126,13 @@ ${plate("d-map", "plate 01", "nothing in the ring talks to anything but magi")}
 ${table(["edge", "who starts it", "carries", "absent?"], [
   ["magi → casper", "magi, once per tool call", "the call as argv and stdin; the result on stdout", "three builtin tools remain: <code>read</code>, <code>write</code>, <code>edit</code>"],
   ["magi → melchior", "magi, once per session", "what the session is doing, up; what the model said and who is calling, down", "no model and no siblings — the session runs and says so"],
-  ["magi → balthasar", "magi, once per session", "every entry out; recalled memory and prior sessions back", "the journal on disk becomes the record instead"],
+  ["magi → balthasar", "magi, once per session", "every entry out; recalled memory and prior sessions back", "no session: magi refuses to start, because this is the store and there is no journal to fall back to"],
   ["session → session", "either, through melchior", "messages, questions and answers between agents", "a session with no siblings, which is the ordinary case"],
   ["front end → session", "the front end", "what was typed, up; everything to draw, down", "the turn keeps running — close the window and come back"],
 ])}
+      <p>Each sibling is named by the role it fills — <code>memory</code>, <code>tools</code>,
+      <code>model</code> — and which program fills it is one line of configuration. See
+      <a href="../guides/roles.html">swapping a program</a>.</p>
 
       <h2 id="why">Why separate processes</h2>
       <p>Three things fall out of the split that do not fall out of modules in one binary.</p>
@@ -202,6 +209,16 @@ ${table(["fault", "means", "the caller should"], [
   ["failed", "the write did not land", "not assume what it handed over was recorded"],
   ["malformed", "the reply was not the shape the family agreed", "report it — this is a bug, not a condition"],
 ])}
+${note("<b>A verb a program does not have is a refusal too</b> — on stdout, in the reply shape, at exit 0. An argument parser left to itself answers an unknown subcommand with usage on stderr and exit 2, which a caller cannot tell from a binary that is not installed.")}
+
+      <h2 id="doors">Three doors</h2>
+      <p>Every row <code>verbs</code> returns names the door it is reached on, and a program may
+      not name a door it cannot open.</p>
+${table(["door", "is", "who has one"], [
+  ["<code>cli</code>", "the command line: one exec, one reply", "all four"],
+  ["<code>socket</code>", "a bound socket, for anything that may knock", "melchior and balthasar. casper binds none: a socket that runs commands is a remote shell."],
+  ["<code>tool</code>", "the vocabulary a model calls, one exec per request — <code>melchior tool --verb X</code>", "melchior, for coordination"],
+])}
 `,
 });
 
@@ -263,8 +280,9 @@ ${plate("d-life", "plate 09", "one per window, and what ends each")}
       <h2 id="ends">What ends each</h2>
 ${table(["sibling", "how magi starts it", "what ends it"], [
   ["balthasar", "<code>serve --instance &lt;session&gt; --tied &lt;pid&gt;</code>, on a socket", "killed on the way out, <b>and</b> by the kernel if that never runs"],
-  ["melchior", "<code>serve --project &lt;p&gt;</code>, on a pipe", "magi closes the pipe; the read returns nothing and it leaves"],
-  ["casper", "<code>run &lt;tool&gt;</code>, once per call", "nothing to end — it exits on its own, every call"],
+  ["melchior", "<code>serve --project &lt;p&gt;</code>, on a pipe", "magi closes the pipe and it leaves — and it leaves too when magi is killed outright and closes nothing"],
+  ["casper", "<code>run &lt;tool&gt;</code>, once per call", "it exits on its own, every call. A call in flight does not outlive the magi that asked, and neither does a program the call started."],
+  ["a child session", "<code>magi fork</code>: its own magi, named by melchior", "the session that started it. The child is told its parent’s pid and leaves when it goes; the parent holds the secret that stops it sooner."],
 ])}
 
       <h2 id="twice">Why balthasar needs it twice</h2>
@@ -309,7 +327,8 @@ PAGES.push({
       <div class="graph" id="g-casper"></div>
 
       <h2 id="gates">What holds the shape</h2>
-      <p>Every one of these runs on the way to <code>main</code>, in all four repositories.</p>
+      <p>Every one of these runs on the way to <code>main</code>, and all but the last in all
+      four repositories.</p>
 ${table(["gate", "what it forbids"], [
   ["no cycles", "two top-level modules that depend on each other. This is what a reachability check cannot catch: a cycle is maximally reachable."],
   ["one wire", "a second way of saying the same thing across a boundary"],
@@ -319,6 +338,10 @@ ${table(["gate", "what it forbids"], [
   ["hermetic", "anything left behind in the temporary directory, checked under one of its own"],
   ["no model needed", "a memory test that only passes with a key and a network"],
   ["no dead weight", "a declared dependency the code does not use"],
+  ["roles", "a program named for a role that does not answer that role’s core verbs — asked of the binary, not read from the source"],
+  ["one Lua VM", "a second Lua VM in a program, or one that is not sandboxed"],
+  ["comments", "a comment longer than a fifth of the code it describes"],
+  ["twins", "magi’s and melchior’s copies of the model wire drifting apart — the one gate that needs two checkouts"],
 ])}
 `,
 });
@@ -331,7 +354,7 @@ PAGES.push({
   nav: "magi",
   title: "magi",
   blurb:
-    "The harness. The conversation, the screen, the journal and the permission ledger — and the " +
+    "The harness. The conversation, the screen, the tool registry and the permission ledger — and the " +
     "only one of the four a person runs.",
   body: `
       <h2 id="owns">What it owns</h2>
@@ -343,7 +366,11 @@ PAGES.push({
         <li><b>The registry.</b> One name, one entry — whatever the tool's transport.</li>
         <li><b>The permission ledger.</b> Nothing the model asks for becomes an action without
         passing it.</li>
-        <li><b>The session.</b> Its id, its journal, and which balthasar holds its transcript.</li>
+        <li><b>The session.</b> Its id, and which program holds its transcript — whatever fills
+        the <a href="../guides/roles.html">memory role</a>.</li>
+        <li><b>Other agents.</b> <code>magi fork</code> starts a child session of this one, and
+        the screen moves between them from the keyboard. See
+        <a href="../guides/sessions.html#fork">sessions</a>.</li>
       </ul>
 
       <h2 id="not">What it does not own</h2>
@@ -361,6 +388,8 @@ PAGES.push({
 magi -p "…"              <span class="c">one prompt, one answer, no terminal</span>
 magi --resume            <span class="c">carry on from this directory's most recent session</span>
 magi doctor              <span class="c">what a session here would be made of, without starting one</span>
+magi fork "…"            <span class="c">start a child session of this one, and print what it is called</span>
+magi --headless          <span class="c">a session with no terminal, reachable until something ends it</span>
 magi tools               <span class="c">every tool the model can call, and how each is reached</span>
 magi models              <span class="c">what melchior says this machine could talk to</span></pre>
 ${note("<b><code>magi doctor</code> never fails.</b> A configuration that will not load is reported rather than exited over — the whole point is to be usable on the machine where something is wrong.")}
@@ -424,6 +453,7 @@ magi.casper = { tools = { dino = { off = true } }, output_bytes = 65536 }</pre>
       wearing a friendly name</b>. The spawn link carries the trust instead: a parent that can
       spawn casper could have run the command itself, so nothing is granted by handing it over.
       One exec per call.</p>
+${note('<b>casper fills the <code>tools</code> role, and is the default rather than the only choice.</b> <code>magi.tools</code> hands the role to any program that answers <code>tools</code> and <code>run</code> — see <a href="../guides/roles.html">swapping a program</a>. The settings table follows the program’s own name, so <code>magi.casper</code> is casper’s because casper is the one filling the role.')}
 
       <h2 id="cli">At a terminal</h2>
       <pre>casper tools                 <span class="c">every tool it offers, as declarations a harness can register</span>
@@ -463,6 +493,9 @@ PAGES.push({
         magi cannot.</li>
         <li><b>The walls.</b> Which session may reach which — see
         <a href="../guides/sessions.html">sessions</a>.</li>
+        <li><b>The crew.</b> Who started whom, who has claimed what, which task is whose, and a
+        handoff when one agent passes work to another — reached by a model through one tool door.
+        See <a href="../guides/sessions.html#crew">the crew</a>.</li>
       </ul>
 
       <h2 id="dir">Where sessions live</h2>
@@ -482,6 +515,9 @@ melchior ask                 <span class="c">run a turn; an Ask on stdin</span>
 melchior needs               <span class="c">what a coordinator may tell it</span>
 melchior configure           <span class="c">take configuration, as Lua on stdin</span>
 melchior serve               <span class="c">bind this session's socket and answer for it</span>
+melchior fork                <span class="c">a name and a secret for a session about to be started</span>
+melchior tool --verb &lt;v&gt;     <span class="c">the coordination vocabulary a model calls, one exec per request</span>
+melchior brief               <span class="c">what to tell a model about the sessions a prompt named</span>
 
 melchior models --cbor       <span class="c">any of them, as bytes</span></pre>
 
@@ -522,13 +558,14 @@ balthasar sessions                <span class="c">which runs this project has ha
 balthasar serve                   <span class="c">listen for other programs</span></pre>
 
       <h2 id="store">Where a store lives</h2>
-      <pre>&lt;project&gt;/balthasar/&lt;tool&gt;/project.db              <span class="c">what is true here, kept</span>
-&lt;project&gt;/balthasar/&lt;tool&gt;/&lt;session&gt;/memory.db     <span class="c">that run's scratch, dies with it</span>
-&lt;project&gt;/balthasar/&lt;tool&gt;/&lt;session&gt;/transcript.db
+      <pre>&lt;project&gt;/balthasar/&lt;tool&gt;/project.db                   <span class="c">what is true here, kept</span>
+&lt;project&gt;/balthasar/&lt;tool&gt;/&lt;run&gt;/transcript.db            <span class="c">that run's turns, verbatim</span>
+&lt;project&gt;/balthasar/&lt;tool&gt;/&lt;run&gt;/&lt;agent&gt;/memory.db        <span class="c">one agent's scratch, dies with the run</span>
 ~/.local/share/balthasar/&lt;tool&gt;/global.db          <span class="c">yours, everywhere</span></pre>
       <p><b>The store lives in the project</b>, so renaming a checkout moves its memory rather than
       orphaning it. Which store a given directory gets is
       <a href="../guides/memory.html#scope">its own question</a>.</p>
+${note('<b>balthasar fills the <code>memory</code> role.</b> It binds under <code>$XDG_RUNTIME_DIR/memory/</code>, the role’s name, and under the older <code>balthasar/</code> for one release so nothing that has not been rebuilt loses it. <code>magi.memory</code> names another program for the role — see <a href="../guides/roles.html">swapping a program</a>.')}
 
       <h2 id="shape">The shape of it</h2>
       <div class="unit-head"><h4>balthasar</h4><span class="role">twelve crates</span>
@@ -552,7 +589,7 @@ PAGES.push({
       <pre>gh release download v0.1.0 --repo ai-nerv/magi --pattern '*-amd64.tar.gz'
 tar -xzf magi-linux-amd64.tar.gz -C ~/.local/bin
 
-<span class="c"># the siblings are separate releases, and every one of them is optional</span>
+<span class="c"># the siblings are separate releases. casper and melchior are optional; a memory layer is not</span>
 gh release download v0.1.0 --repo ai-nerv/casper    --pattern '*-amd64.tar.gz'
 gh release download v0.1.0 --repo ai-nerv/melchior  --pattern '*-amd64.tar.gz'
 gh release download v0.1.0 --repo ai-nerv/balthasar --pattern '*-amd64.tar.gz'</pre>
@@ -562,14 +599,15 @@ ${table(["", "without it"], [
   ["magi", "nothing — this is the one you run"],
   ["casper", "a session with three builtin tools: <code>read</code>, <code>write</code>, <code>edit</code>"],
   ["melchior", "no model and no siblings. The session runs and says so."],
-  ["balthasar", "a journal file instead of a store. Everything else is the same."],
+  ["balthasar", 'no session: the memory layer is the store, so magi refuses to start rather than record nowhere. Another program can fill the role — see <a href="roles.html">swapping a program</a>.'],
 ])}
 
       <h2 id="check">Check before you start</h2>
       <pre>magi doctor</pre>
       <p>It answers everything a session decides at start-up: which configuration was read, which
       of its lines were kept, what the registry holds and where each entry came from, and whether
-      the siblings actually <i>answer</i>. Asked, not looked for — a program on
+      the siblings actually <i>answer</i> — and whether the program named for each role can fill
+      it at all. Asked, not looked for — a program on
       <code>$PATH</code> is not a running one, and a socket that accepts is not one that
       answers.</p>
 ${note("<b><code>magi</code> is the only command.</b> It starts a balthasar and a melchior for each session and ends both. <code>doctor</code> reporting <i>“balthasar installed, but not reachable: no socket to try”</i> is correct output outside a session — there is no session, so there is no socket.")}
@@ -607,8 +645,6 @@ ${plate("d-config", "plate 11", "load order, and where a project file is refused
       <h2 id="entry">The entry point</h2>
       <pre><span class="c">-- ~/.config/magi/init.lua — what you name explicitly.</span>
 <span class="c">-- What you *install* is discovered: see writing a tool.</span>
-magi.load("clients/hexe.lua")
-magi.load("clients/oslo.lua")
 magi.load("tools.lua")
 
 magi.model   = "openrouter/anthropic/claude-sonnet-4.6"
@@ -618,6 +654,7 @@ magi.allow   = { … }                    <span class="c">-- answered in advance
       <h2 id="settings">What it takes</h2>
 ${table(["setting", "does"], [
   ["<code>magi.model</code>", "which model, as <code>magi models</code> prints it"],
+  ['<code>magi.memory</code> · <code>magi.tools</code> · <code>magi.melchior</code>', 'as a string, which program fills that role — see <a href="roles.html">swapping a program</a>'],
   ["<code>magi.confine</code>", "whether <code>read</code>, <code>write</code> and <code>edit</code> refuse paths outside the session's directory"],
   ["<code>magi.allow</code>", "permissions granted in advance, so they are not asked about"],
   ["<code>magi.trusted</code>", "directories whose <code>.magi.lua</code> is as good as this file"],
@@ -625,7 +662,7 @@ ${table(["setting", "does"], [
   ["<code>magi.project</code>", "what this session is called, in the name other sessions see"],
   ["<code>magi.agent_talk</code>", "how far one session may reach another"],
   ["<code>magi.ui</code>", "every colour, glyph and measurement the screen draws with"],
-  ["<code>magi.casper</code> · <code>magi.melchior</code> · <code>magi.balthasar</code>", "settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two"],
+  ["<code>magi.casper</code> · <code>magi.melchior</code> · <code>magi.balthasar</code>", "as a table, settings handed to that sibling, in <i>its</i> vocabulary — one place to edit rather than two. For the tools role the table is named after whichever program fills it."],
 ])}
 
       <h2 id="trust">A project's own file</h2>
@@ -636,6 +673,7 @@ ${table(["a project file may", "and may not"], [
   ["choose a model the machine already offers", "declare a tool"],
   ["set ordinary settings", "touch <code>confine</code>, <code>allow</code> or <code>trusted</code> — fatal, not a warning"],
   ["load its own files", "name its own directory as trusted"],
+  ["tune a sibling through its settings table", "name the program that fills a role — fatal, since it would run with the session’s authority"],
 ])}
       <p>The one way past it is from your own configuration: naming a directory in
       <code>magi.trusted</code> makes its project file as good as yours. A decision made once, in
@@ -658,6 +696,95 @@ $ casper needs</pre>
       vocabulary, not magi's: renaming a setting on one side shows up as a line on stderr instead
       of failing silently on the other.</p>
 ${note("<b>A program spawned per call is told on every spawn.</b> <code>configure</code> sets something in the process that answers it — the whole of what a sibling needs when it is asked once and then runs for the session. casper is one process per call, so what magi decided rides on <i>every</i> spawn instead. Otherwise casper would report the setting taken and the next call would be a fresh process that had never heard of it.")}
+`,
+});
+
+PAGES.push({
+  at: "guides/roles.html",
+  section: "guide",
+  nav: "swapping a program",
+  title: "Swapping a program",
+  blurb:
+    "A role is what a program is for; which program fills it is one line of configuration. " +
+    "balthasar, casper and melchior are the defaults, not the only choices.",
+  body: `
+      <h2 id="three">Three roles</h2>
+      <p>magi does not know that its memory is called balthasar. It knows the <code>memory</code>
+      role is filled by whatever <code>magi.memory</code> names, and that whatever fills it answers
+      the role’s verbs. Change the name and the program changes — nothing else does.</p>
+${table(["role", "named by", "default", "core verbs", "unfilled"], [
+  ["memory", "<code>magi.memory</code>", "balthasar", "<code>observe</code> <code>replay</code> <code>sessions</code>", "magi refuses to start: this is the store"],
+  ["tools", "<code>magi.tools</code>", "casper", "<code>tools</code> <code>run</code>", "an ordinary session with the three builtin tools"],
+  ["model", "<code>magi.melchior</code>", "melchior", "<code>models</code> <code>ask</code>", "no model to ask"],
+])}
+      <pre>magi.memory = "remembrance"   <span class="c">-- a program on $PATH</span>
+magi.tools  = "workbench"</pre>
+${note("<b><code>magi.model</code> is the model, not the program.</b> It named the model before roles existed, so the model role is named by <code>magi.melchior</code>, which has always meant the program. A table there is still that program’s settings; only a string names it.")}
+
+      <h2 id="core">Core, and everything else</h2>
+${table(["", "if a program refuses it"], [
+  ["<b>core</b>", "it cannot fill the role. The gate fails, and <code>magi doctor</code> says so."],
+  ["<b>extension</b>", "magi carries on with less — a model tool not declared, no compaction, an outcome loop that records nothing."],
+])}
+      <p>An extension is <i>refused</i>, not omitted: a program that does not do <code>plan</code>
+      answers <code>plan</code> with a refusal in the reply shape, like any other. Silence is the one
+      thing that is not allowed. The line was drawn from what magi actually calls, not from what any
+      implementation happens to offer — see the <a href="../reference/verbs.html#balthasar">memory
+      verbs</a>.</p>
+${note("<b><code>sessions</code> is core because it was measured to be.</b> It was an extension in the first draft. A memory layer written to that draft was pointed at magi with <code>sessions</code> refused, and <code>--resume</code> came back empty at exit 0, saying nothing — magi asks it first, to find the newest run, before it can replay one. Running a second program against the contract is how the line got drawn in the right place.")}
+
+      <h2 id="check">Before you name one</h2>
+      <p>Ask the binary, not its source. The role gate lists the core verbs a program advertises
+      and fails on any it does not:</p>
+      <pre>$ scripts/gate-role.sh tools ./workbench
+gate-role: workbench as tools
+  tools          core       answered
+  run            core       answered
+  extensions                2 of 2
+
+gate-role: workbench fills tools.</pre>
+      <p>And <code>magi doctor</code> asks the same of whatever your configuration names, before a
+      session depends on it. With <code>magi.memory = "casper"</code>, which cannot:</p>
+      <pre>roles
+  memory   casper — ~/.local/bin/casper — cannot fill memory: it answers no observe, replay, sessions
+  tools    casper — ~/.local/bin/casper — 13 tools
+  model    melchior — ~/.local/bin/melchior — 449 models</pre>
+
+      <h2 id="proof">Two that exist to prove it</h2>
+      <p>magi’s repository carries a second implementation of two of the roles, each one file of
+      Rust with no dependencies, written from the contract rather than from magi’s source. Both run
+      in magi’s own test suite against real sessions: one records a conversation and resumes it, the
+      other is offered to the model, called, and answers.</p>
+${table(["", "fills", "answers"], [
+  ["<code>examples/remembrance</code>", "memory", "the family floor and the three core verbs, on a socket; refuses every extension"],
+  ["<code>examples/workbench</code>", "tools", "<code>tools</code> and <code>run</code>, one exec per call, and one tool that reverses a string"],
+])}
+      <pre>rustc examples/workbench/workbench.rs -O -o ~/.local/bin/workbench</pre>
+
+      <h2 id="told">What a tools program is told</h2>
+      <p>Its settings come from the table named after the program itself, and ride on every spawn —
+      there is no process alive between calls to send them to once.</p>
+      <pre>magi.tools            = "workbench"
+magi.workbench        = { quiet = true }   <span class="c">-- arrives as JSON in MAGI_TOOLS_CONFIGURE</span>
+magi.workbench_sha256 = "…"               <span class="c">-- the bytes it must hash to, from magi doctor</span></pre>
+      <p>For casper that is <code>magi.casper</code> and <code>magi.casper_sha256</code>, which is
+      why a configuration written before roles existed still works: the default program’s table has
+      the name it always had. The same value is also set as <code>CASPER_CONFIGURE</code>, which is
+      what casper reads.</p>
+
+      <h2 id="trust">Only your own configuration names one</h2>
+      <p>A role’s program is started every turn with the session’s authority, which is more than a
+      declared tool — and a project file is already refused a tool. So a <code>.magi.lua</code> that
+      names a program for any role stops the session with a reason, rather than running what the
+      checkout shipped beside itself. A project may still tune a sibling through its settings table;
+      what is privileged is the name.</p>
+
+      <h2 id="join">Writing one</h2>
+      <p>Answer the family floor — <code>verbs</code> and <code>client</code>, in the reply shape —
+      and the role’s core. Refuse the rest by name. There is no registration and no library to link:
+      a library shared between these programs is the dependency the whole arrangement exists to
+      prevent. The contract is <code>ROLES.md</code>, beside <code>FAMILY.md</code> in each of the
+      four repositories.</p>
 `,
 });
 
@@ -713,7 +840,7 @@ ${table(["field", "is"], [
 ${table(["transport", "is", "for"], [
   ["<code>lua</code>", "a body that runs in magi's own VM", "anything that is a few lines of logic"],
   ["<code>command</code>", "a program on <code>$PATH</code>, given the call as argv", "wrapping something that already exists"],
-  ["<code>casper</code>", "<code>casper run &lt;tool&gt;</code>", "the thirteen casper ships"],
+  ["<code>casper</code>", "<code>&lt;program&gt; run &lt;tool&gt;</code>, one exec per call", "whatever the tools role’s program offers — casper’s thirteen, unless <code>magi.tools</code> names another"],
   ["<code>builtin</code>", "compiled into magi", "the floor: <code>read</code>, <code>write</code>, <code>edit</code>"],
 ])}
       <p>The registry does not care which. One name, one entry, and the model sees the same
@@ -891,6 +1018,10 @@ $ magi --resume -p "what number did I ask you to remember?"
 8231</pre>
       <p>A separate process, after the first one and the balthasar it started are both gone. What
       survives is the store, not a running thing.</p>
+      <p>The program holding it is whatever fills the <code>memory</code> role — balthasar unless
+      <code>magi.memory</code> names another. <code>--resume</code> needs only the role’s core:
+      <code>sessions</code> to find the newest run, <code>replay</code> to read it back. Both wait
+      for a store that is still opening, rather than resuming into an empty conversation.</p>
 `,
 });
 
@@ -919,6 +1050,27 @@ ${table(["<code>magi.agent_talk</code>", "lets"], [
 ])}
       <p>Sessions in different projects never can, at any setting. This only widens things inside
       one project, and nothing widens it further.</p>
+
+      <h2 id="fork">A child of this session</h2>
+      <pre>magi fork "review the parser" --role reviewer --role-description "reads diffs, writes none"</pre>
+      <p>melchior names the child and mints the secret that makes it stoppable; magi starts the
+      process. The child is told which session started it and leaves when that one does. It gets no
+      more than its parent has — a child that wants something outside that is refused and told to
+      ask its parent. A role given at birth is a label others can route by, and it grants
+      nothing.</p>
+
+      <h2 id="crew">The crew</h2>
+      <p>A model reaches the other agents through one tool, whose verbs melchior answers on its
+      <code>tool</code> door:</p>
+${table(["verbs", "for"], [
+  ["<code>list</code> <code>whoami</code> <code>about</code> <code>crew</code>", "who is here, who started whom, and what each is for"],
+  ["<code>send</code> <code>ask</code> <code>reply</code> <code>inbox</code>", "talking — an answer can arrive long after the connection that carried the question has closed"],
+  ["<code>claim</code> <code>claims</code> <code>release</code>", "saying what one is working on, so two agents do not both do it"],
+  ["<code>assign</code> <code>task</code> <code>handoff</code>", "handing work to another agent, and keeping a handle on it"],
+  ["<code>stop</code> <code>disband</code>", "ending a child, or a whole branch of them"],
+])}
+      <p>Every session publishes its screen beside its socket, so the one terminal you have moves
+      from agent to agent rather than a window being opened per agent.</p>
 
       <h2 id="verbs">What a session may say</h2>
       <p>The vocabulary has <b>no verb that runs anything</b>. It sends messages, reads an inbox,
@@ -1065,27 +1217,30 @@ PAGES.push({
       <h2 id="balthasar">balthasar</h2>
       <p>The surface is small on purpose. It is not a mirror of what balthasar can do; it is the
       handful of things another program has a real reason to ask a memory layer.</p>
-${table(["verb", "does"], [
-  ["<code>verbs</code>", "what this socket answers. The one call every balthasar has had since v1, and what a caller asks first."],
-  ["<code>observe</code>", "take an entry into this run's record"],
-  ["<code>recall</code>", "search, and say how sure it is about each answer"],
-  ["<code>context</code>", "exactly what a model would be told"],
-  ["<code>resume</code> · <code>replay</code>", "a prior run's entries, back out again"],
-  ["<code>sessions</code>", "which runs this project has had"],
-  ["<code>used</code> · <code>outcome</code>", "what a turn did with what it was given, and how that went"],
-  ["<code>plan</code>", "what it would cost to inject, before injecting"],
+      <p>These are the <code>memory</code> role’s verbs. The core three are what any memory
+      layer owes; the rest it may refuse by name, and magi carries on with less — see
+      <a href="../guides/roles.html">swapping a program</a>.</p>
+${table(["verb", "does", "role"], [
+  ["<code>observe</code>", "take a turn into this run's record, as it settles", "core"],
+  ["<code>replay</code>", "everything a run said, in order", "core"],
+  ["<code>sessions</code>", "which runs this project has had", "core"],
+  ["<code>amend</code>", "revise a turn after it settled", "extension"],
+  ["<code>recall</code> · <code>remember</code> · <code>forget</code> · <code>why</code>", "search, keep, let go, and show the evidence — the four a model is given as tools", "extension"],
+  ["<code>scroll</code>", "a run's history a page at a time, so an elided tool result can be read back", "extension"],
+  ["<code>plan</code>", "what to keep, mask, drop or summarise when the window is over budget", "extension"],
+  ["<code>used</code> · <code>outcome</code>", "what a turn did with what it was given, and how that went", "extension"],
+  ["<code>model</code> · <code>resume</code>", "which model a run talks to; where the store thinks it left off", "extension"],
 ])}
 ${note("<b><code>prompt</code>, <code>run</code> and <code>eval</code> are absent and stay absent.</b> A memory layer that can be told to run something is not a memory layer.")}
 
       <h2 id="melchior">melchior</h2>
-${table(["verb", "does"], [
-  ["<code>listening</code>", "where this session is, and what it is called"],
-  ["<code>doing</code>", "what it is busy with — an <i>event</i>, so nobody replies"],
-  ["<code>message</code>", "put something in another session's inbox"],
-  ["<code>ask</code> · <code>reply</code>", "a question to a session, and its answer — which arrives long after the connection that carried the question has closed"],
-  ["<code>who</code>", "who is listening, within the walls"],
-  ["<code>mint</code> · <code>minted</code>", "a token for a session of one's own. Self only."],
+${table(["door", "verbs"], [
+  ["socket", "<code>identity</code> <code>tell</code> <code>inbox</code> <code>kin</code> <code>role</code> <code>status</code> <code>stop</code> <code>adopt</code> <code>adopted</code> <code>mint</code> <code>minted</code> — one program asking another session"],
+  ["tool", "<code>whoami</code> <code>about</code> <code>list</code> <code>send</code> <code>ask</code> <code>reply</code> <code>inbox</code> <code>crew</code> <code>claim</code> <code>claims</code> <code>release</code> <code>assign</code> <code>task</code> <code>handoff</code> <code>disband</code> <code>stop</code> <code>role</code> <code>status</code> <code>attention</code> <code>trouble</code> <code>announce</code> <code>adopt</code> <code>help</code> — what a model calls"],
 ])}
+      <p><code>identity</code> and <code>tell</code> on the socket are <code>whoami</code> and
+      <code>send</code> on the tool door, and they are not aliases: one answers a program with a
+      record, the other a model with a paragraph.</p>
       <p>No verb here runs anything, and melchior's own tests refuse one named <code>run</code>,
       <code>shell</code>, <code>exec</code> or <code>eval</code>.</p>
 
@@ -1133,9 +1288,12 @@ PAGES.push({
   -p, --print                 <span class="c">print the answer and exit, instead of opening the UI</span>
   -r, --resume                <span class="c">continue this directory's most recent session</span>
       --socket &lt;PATH&gt;         <span class="c">connect to a named socket instead of one per directory</span>
-      --sessions &lt;DIR&gt;        <span class="c">where session journals live</span>
+      --headless              <span class="c">serve with no terminal, reachable until something ends it</span>
+      --role &lt;NAME&gt;           <span class="c">what this session is for, in one word; main when nothing says</span>
+      --json | --cbor         <span class="c">which encoding a reply comes back in</span>
 
 magi doctor                   <span class="c">what a session here would be made of, without starting one</span>
+magi fork [PROMPT]            <span class="c">start a child session of this one, and print what it is called</span>
 magi verbs                    <span class="c">what it answers, on each of its doors</span>
 magi acknowledge              <span class="c">clear the installed packages, so they may run</span>
 magi tools                    <span class="c">every tool the model can call, and how each is reached</span>
@@ -1161,7 +1319,9 @@ melchior serve                <span class="c">bind this session's socket and ans
   --project &lt;NAME&gt;            <span class="c">which project this session belongs to</span>
 melchior needs                <span class="c">what a coordinator may tell it</span>
 melchior configure            <span class="c">take that configuration, as Lua on stdin</span>
-melchior tool                 <span class="c">the agent surface, as a harness calls it</span>
+melchior fork                 <span class="c">a name and a secret for a session about to be started</span>
+melchior tool --verb &lt;VERB&gt;   <span class="c">the coordination vocabulary a model calls, one exec per request</span>
+melchior brief                <span class="c">what to tell a model about the sessions a prompt named</span>
 melchior verbs                <span class="c">what it answers, on each of its doors</span>
 melchior acknowledge          <span class="c">clear the installed packages, so their declarations may run</span>
   --json | --cbor             <span class="c">which encoding a reply comes back in</span></pre>
@@ -1178,11 +1338,16 @@ balthasar sessions            <span class="c">which runs this project has had</s
 balthasar decay               <span class="c">what today's forgetting would take, before it takes it</span>
 balthasar consolidate         <span class="c">carry what recurred across sessions into the project</span>
 balthasar eval                <span class="c">measure whether memory earns its place</span>
+balthasar replay              <span class="c">everything a run said, back out again</span>
+balthasar export · import     <span class="c">every memory, one JSON object per line, and back</span>
+balthasar outcomes            <span class="c">what a session reported, and how it went</span>
+balthasar init                <span class="c">make this directory the root of its own memory</span>
 
 balthasar serve               <span class="c">listen for other programs</span>
   --instance &lt;NAME&gt;           <span class="c">when more than one should be reachable at once</span>
   --scope &lt;SCOPE&gt;             <span class="c">global, project, or a path</span>
   --tied &lt;PID&gt;                <span class="c">end when that process ends, enforced by the kernel</span>
+  --tool &lt;NAME&gt;               <span class="c">which tool the memory belongs to</span>
 balthasar api &lt;VERB&gt; [ARGS]   <span class="c">answer one question, wire-shaped, and exit</span>
   --json | --cbor             <span class="c">which encoding a reply comes back in</span></pre>
 ${note("<b><code>--tied</code> is absent by default.</b> A balthasar started at a terminal or by a unit file is meant to outlive the thing that typed the command. magi passes it, naming its own process id, so the memory layer cannot outlive the window even if magi is killed outright.")}

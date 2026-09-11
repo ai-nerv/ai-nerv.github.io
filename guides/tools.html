@@ -36,6 +36,7 @@
     <ul>
       <li><a href="install.html">install</a></li>
       <li><a href="configure.html">configuration</a></li>
+      <li><a href="roles.html">swapping a program</a></li>
       <li><a href="tools.html" aria-current="page">writing a tool</a></li>
       <li><a href="permissions.html">what may run</a></li>
       <li><a href="memory.html">memory</a></li>
@@ -98,7 +99,7 @@
         <tbody>
           <tr><td><code>lua</code></td><td class="wrap-ok">a body that runs in magi's own VM</td><td class="wrap-ok">anything that is a few lines of logic</td></tr>
           <tr><td><code>command</code></td><td class="wrap-ok">a program on <code>$PATH</code>, given the call as argv</td><td class="wrap-ok">wrapping something that already exists</td></tr>
-          <tr><td><code>casper</code></td><td class="wrap-ok"><code>casper run &lt;tool&gt;</code></td><td class="wrap-ok">the thirteen casper ships</td></tr>
+          <tr><td><code>casper</code></td><td class="wrap-ok"><code>&lt;program&gt; run &lt;tool&gt;</code>, one exec per call</td><td class="wrap-ok">whatever the tools role’s program offers — casper’s thirteen, unless <code>magi.tools</code> names another</td></tr>
           <tr><td><code>builtin</code></td><td class="wrap-ok">compiled into magi</td><td class="wrap-ok">the floor: <code>read</code>, <code>write</code>, <code>edit</code></td></tr>
         </tbody>
       </table></div>
@@ -167,7 +168,7 @@
       written against 1 keeps running. Renaming one, removing one, or changing what a field means
       does.</p>
 
-      <div class="next"><a href="configure.html"><span class="lbl">back</span>configuration</a><a href="permissions.html"><span class="lbl">next</span>what may run</a></div>
+      <div class="next"><a href="roles.html"><span class="lbl">back</span>swapping a program</a><a href="permissions.html"><span class="lbl">next</span>what may run</a></div>
     </main>
   </div>
   <footer class="foot">

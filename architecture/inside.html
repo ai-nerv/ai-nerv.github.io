@@ -63,7 +63,8 @@
       <div class="graph" id="g-casper"></div>
 
       <h2 id="gates">What holds the shape</h2>
-      <p>Every one of these runs on the way to <code>main</code>, in all four repositories.</p>
+      <p>Every one of these runs on the way to <code>main</code>, and all but the last in all
+      four repositories.</p>
       <div class="tw"><table>
         <thead><tr><th>gate</th><th>what it forbids</th></tr></thead>
         <tbody>
@@ -75,6 +76,10 @@
           <tr><td>hermetic</td><td class="wrap-ok">anything left behind in the temporary directory, checked under one of its own</td></tr>
           <tr><td>no model needed</td><td class="wrap-ok">a memory test that only passes with a key and a network</td></tr>
           <tr><td>no dead weight</td><td class="wrap-ok">a declared dependency the code does not use</td></tr>
+          <tr><td>roles</td><td class="wrap-ok">a program named for a role that does not answer that role’s core verbs — asked of the binary, not read from the source</td></tr>
+          <tr><td>one Lua VM</td><td class="wrap-ok">a second Lua VM in a program, or one that is not sandboxed</td></tr>
+          <tr><td>comments</td><td class="wrap-ok">a comment longer than a fifth of the code it describes</td></tr>
+          <tr><td>twins</td><td class="wrap-ok">magi’s and melchior’s copies of the model wire drifting apart — the one gate that needs two checkouts</td></tr>
         </tbody>
       </table></div>
 

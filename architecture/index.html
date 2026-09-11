@@ -56,11 +56,14 @@
         <tbody>
           <tr><td>magi → casper</td><td class="wrap-ok">magi, once per tool call</td><td class="wrap-ok">the call as argv and stdin; the result on stdout</td><td class="wrap-ok">three builtin tools remain: <code>read</code>, <code>write</code>, <code>edit</code></td></tr>
           <tr><td>magi → melchior</td><td class="wrap-ok">magi, once per session</td><td class="wrap-ok">what the session is doing, up; what the model said and who is calling, down</td><td class="wrap-ok">no model and no siblings — the session runs and says so</td></tr>
-          <tr><td>magi → balthasar</td><td class="wrap-ok">magi, once per session</td><td class="wrap-ok">every entry out; recalled memory and prior sessions back</td><td class="wrap-ok">the journal on disk becomes the record instead</td></tr>
+          <tr><td>magi → balthasar</td><td class="wrap-ok">magi, once per session</td><td class="wrap-ok">every entry out; recalled memory and prior sessions back</td><td class="wrap-ok">no session: magi refuses to start, because this is the store and there is no journal to fall back to</td></tr>
           <tr><td>session → session</td><td class="wrap-ok">either, through melchior</td><td class="wrap-ok">messages, questions and answers between agents</td><td class="wrap-ok">a session with no siblings, which is the ordinary case</td></tr>
           <tr><td>front end → session</td><td class="wrap-ok">the front end</td><td class="wrap-ok">what was typed, up; everything to draw, down</td><td class="wrap-ok">the turn keeps running — close the window and come back</td></tr>
         </tbody>
       </table></div>
+      <p>Each sibling is named by the role it fills — <code>memory</code>, <code>tools</code>,
+      <code>model</code> — and which program fills it is one line of configuration. See
+      <a href="../guides/roles.html">swapping a program</a>.</p>
 
       <h2 id="why">Why separate processes</h2>
       <p>Three things fall out of the split that do not fall out of modules in one binary.</p>

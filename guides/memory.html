@@ -36,6 +36,7 @@
     <ul>
       <li><a href="install.html">install</a></li>
       <li><a href="configure.html">configuration</a></li>
+      <li><a href="roles.html">swapping a program</a></li>
       <li><a href="tools.html">writing a tool</a></li>
       <li><a href="permissions.html">what may run</a></li>
       <li><a href="memory.html" aria-current="page">memory</a></li>
@@ -102,6 +103,10 @@ $ magi --resume -p "what number did I ask you to remember?"
 8231</pre>
       <p>A separate process, after the first one and the balthasar it started are both gone. What
       survives is the store, not a running thing.</p>
+      <p>The program holding it is whatever fills the <code>memory</code> role — balthasar unless
+      <code>magi.memory</code> names another. <code>--resume</code> needs only the role’s core:
+      <code>sessions</code> to find the newest run, <code>replay</code> to read it back. Both wait
+      for a store that is still opening, rather than resuming into an empty conversation.</p>
 
       <div class="next"><a href="permissions.html"><span class="lbl">back</span>what may run</a><a href="sessions.html"><span class="lbl">next</span>sessions</a></div>
     </main>
